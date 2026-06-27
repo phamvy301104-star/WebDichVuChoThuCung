@@ -1,14 +1,14 @@
 :root {
-  --primary-color: #7c3aed;
-  --secondary-color: #ec4899;
+  --primary-color: #3BB77E;
+  --secondary-color: #F6921E;
   --success-color: #10b981;
   --danger-color: #ef4444;
   --warning-color: #f59e0b;
   --info-color: #3b82f6;
-  --light-color: #f3f4f6;
-  --dark-color: #1f2937;
+  --light-color: #F4F8F6;
+  --dark-color: #253D4E;
   --border-radius: 8px;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -1141,7 +1141,7 @@ body {
 .admin-sidebar-new {
   width: 256px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+  background: linear-gradient(180deg, #1B4332 0%, #0D2818 100%);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -1207,7 +1207,7 @@ body {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #818cf8, #a78bfa);
+  background: linear-gradient(135deg, #3BB77E, #2D9B6A);
   color: #fff;
   display: flex;
   align-items: center;
@@ -1228,7 +1228,7 @@ body {
 
 .asn-user-role {
   font-size: 0.75rem;
-  color: #a5b4fc;
+  color: #86efac;
 }
 
 /* Dashboard link */
@@ -1251,7 +1251,7 @@ body {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #818cf8;
+  color: #86efac;
   padding: 10px 8px 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -1264,7 +1264,7 @@ body {
   gap: 10px;
   padding: 9px 10px;
   border-radius: 8px;
-  color: #c7d2fe;
+  color: #bbf7d0;
   text-decoration: none;
   font-size: 0.88rem;
   font-weight: 500;
@@ -1278,12 +1278,12 @@ body {
 }
 
 .asn-item:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.12);
   color: #fff;
 }
 
 .asn-item.active {
-  background: linear-gradient(90deg, rgba(99,102,241,0.8), rgba(139,92,246,0.6));
+  background: linear-gradient(90deg, rgba(59,183,126,0.7), rgba(45,155,106,0.5));
   color: #fff;
   font-weight: 700;
 }

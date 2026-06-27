@@ -24,7 +24,7 @@ export const CartPage: React.FC = () => (
               <div style={{ color: '#ef4444', fontWeight: 700 }}>{fmt(item.price)}</div>
             </div>
             <div style={{ color: '#374151', fontWeight: 600 }}>x{item.qty}</div>
-            <div style={{ fontWeight: 800, color: '#6366f1', minWidth: 90, textAlign: 'right' }}>{fmt(item.price * item.qty)}</div>
+            <div style={{ fontWeight: 800, color: '#3BB77E', minWidth: 90, textAlign: 'right' }}>{fmt(item.price * item.qty)}</div>
           </div>
         ))}
       </div>
@@ -33,7 +33,7 @@ export const CartPage: React.FC = () => (
           <div style={{ color: '#6b7280', marginBottom: 4 }}>Tổng cộng</div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ef4444' }}>{fmt(total)}</div>
         </div>
-        <button style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff', border: 'none', padding: '12px 32px', borderRadius: 10, fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Đặt hàng</button>
+        <button style={{ background: 'linear-gradient(135deg,#3BB77E,#2D9B6A)', color: '#fff', border: 'none', padding: '12px 32px', borderRadius: 10, fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Đặt hàng</button>
       </div>
     </main>
     <Footer />

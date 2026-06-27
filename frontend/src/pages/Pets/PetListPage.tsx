@@ -15,7 +15,7 @@ export const PetListPage: React.FC = () => (
   <>
     <Header />
     <main className="page-container">
-      <div style={{ textAlign: 'center', padding: '48px 20px 32px', background: 'linear-gradient(135deg,#ec4899,#8b5cf6)', borderRadius: 16, color: '#fff', marginBottom: 32 }}>
+      <div style={{ textAlign: 'center', padding: '48px 20px 32px', background: 'linear-gradient(135deg,#3BB77E,#F6921E)', borderRadius: 16, color: '#fff', marginBottom: 32 }}>
         <div style={{ fontSize: '3rem', marginBottom: 12 }}>🐾</div>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: '0 0 10px' }}>Nhận nuôi thú cưng</h1>
         <p style={{ fontSize: '1.05rem', opacity: 0.9, margin: 0 }}>Mỗi thú cưng đều xứng đáng có một ngôi nhà yêu thương ❤️</p>
@@ -26,7 +26,7 @@ export const PetListPage: React.FC = () => (
             <div style={{ height: 120, background: 'linear-gradient(135deg,#fdf2f8,#ede9fe)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem' }}>{p.icon}</div>
             <div style={{ padding: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <h3 style={{ fontWeight: 700, color: '#1e1b4b', margin: 0, fontSize: '1.1rem' }}>{p.name}</h3>
+                <h3 style={{ fontWeight: 700, color: '#253D4E', margin: 0, fontSize: '1.1rem' }}>{p.name}</h3>
                 <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: '0.72rem', fontWeight: 700, color: '#1e40af', background: '#dbeafe' }}>{p.status}</span>
               </div>
               <div style={{ fontSize: '0.82rem', color: '#6b7280', marginBottom: 10 }}>{p.breed} · {p.age} · {p.gender}</div>

@@ -34,8 +34,8 @@ export const ProductListPage: React.FC = () => (
                 {p.oldPrice && <span style={{ position: 'absolute', top: 10, left: 10, background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: 10 }}>-{Math.round((1 - p.price / p.oldPrice) * 100)}%</span>}
               </div>
               <div style={{ padding: '14px 16px' }}>
-                <span style={{ background: '#ede9fe', color: '#6d28d9', fontSize: '0.72rem', fontWeight: 600, padding: '2px 7px', borderRadius: 5 }}>{p.category}</span>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e1b4b', margin: '8px 0 6px', lineHeight: 1.3 }}>{p.name}</h3>
+        <span style={{ background: '#E8F5EF', color: '#166534', fontSize: '0.72rem', fontWeight: 600, padding: '2px 7px', borderRadius: 5 }}>{p.category}</span>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#253D4E', margin: '8px 0 6px', lineHeight: 1.3 }}>{p.name}</h3>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <span style={{ fontWeight: 800, color: '#ef4444', fontSize: '1rem' }}>{fmt(p.price)}</span>

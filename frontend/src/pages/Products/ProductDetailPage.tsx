@@ -9,8 +9,8 @@ export const ProductDetailPage: React.FC = () => (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
         <div style={{ background: 'linear-gradient(135deg,#fef9f0,#fef3c7)', borderRadius: 16, height: 360, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8rem' }}>🐱</div>
         <div>
-          <span style={{ background: '#ede9fe', color: '#6d28d9', fontSize: '0.78rem', fontWeight: 600, padding: '3px 10px', borderRadius: 6 }}>Thức ăn</span>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e1b4b', margin: '12px 0 8px' }}>Thức ăn mèo Royal Canin 400g</h1>
+          <span style={{ background: '#E8F5EF', color: '#166534', fontSize: '0.78rem', fontWeight: 600, padding: '3px 10px', borderRadius: 6 }}>Thức ăn</span>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#253D4E', margin: '12px 0 8px' }}>Thức ăn mèo Royal Canin 400g</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
             <span style={{ fontSize: '1.8rem', fontWeight: 900, color: '#ef4444' }}>185.000đ</span>
             <span style={{ fontSize: '1rem', color: '#9ca3af', textDecoration: 'line-through' }}>220.000đ</span>

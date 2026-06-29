@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Pet } from '@types/index';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Pet } from "@types/index";
 
 interface PetState {
   pets: Pet[];
@@ -20,7 +20,7 @@ const initialState: PetState = {
 };
 
 const petSlice = createSlice({
-  name: 'pet',
+  name: "pet",
   initialState,
   reducers: {
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -51,5 +51,14 @@ const petSlice = createSlice({
   },
 });
 
-export const { setLoading, setPets, setSelectedPet, setPetsForSale, setPetsForAdoption, addPet, setError, clearError } = petSlice.actions;
+export const {
+  setLoading,
+  setPets,
+  setSelectedPet,
+  setPetsForSale,
+  setPetsForAdoption,
+  addPet,
+  setError,
+  clearError,
+} = petSlice.actions;
 export default petSlice.reducer;

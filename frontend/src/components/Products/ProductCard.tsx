@@ -1,7 +1,7 @@
-import React from 'react';
-import { Product } from '@types/index';
-import { useDispatch } from 'react-redux';
-import { addToCart } from '@stores/slices/cartSlice';
+import React from "react";
+import { Product } from "@types/index";
+import { useDispatch } from "react-redux";
+import { addToCart } from "@stores/slices/cartSlice";
 
 interface ProductCardProps {
   product: Product;
@@ -12,7 +12,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleAddToCart = () => {
     dispatch(addToCart({ product, quantity: 1 }));
-    alert('Đã thêm vào giỏ hàng!');
+    alert("Đã thêm vào giỏ hàng!");
   };
 
   return (

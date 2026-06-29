@@ -1,12 +1,15 @@
-import React from 'react';
-import { Service } from '@types/index';
+import React from "react";
+import { Service } from "@types/index";
 
 interface ServiceCardProps {
   service: Service;
   onBook?: (serviceId: string) => void;
 }
 
-export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onBook }) => {
+export const ServiceCard: React.FC<ServiceCardProps> = ({
+  service,
+  onBook,
+}) => {
   return (
     <div className="service-card">
       {service.image && <img src={service.image} alt={service.name} />}

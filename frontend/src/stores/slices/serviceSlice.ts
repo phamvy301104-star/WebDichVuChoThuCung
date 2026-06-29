@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Service, Booking } from '@types/index';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Service, Booking } from "@types/index";
 
 interface ServiceState {
   services: Service[];
@@ -18,7 +18,7 @@ const initialState: ServiceState = {
 };
 
 const serviceSlice = createSlice({
-  name: 'service',
+  name: "service",
   initialState,
   reducers: {
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -47,5 +47,13 @@ const serviceSlice = createSlice({
   },
 });
 
-export const { setLoading, setServices, setSelectedService, setBookings, addBooking, setError, clearError } = serviceSlice.actions;
+export const {
+  setLoading,
+  setServices,
+  setSelectedService,
+  setBookings,
+  addBooking,
+  setError,
+  clearError,
+} = serviceSlice.actions;
 export default serviceSlice.reducer;

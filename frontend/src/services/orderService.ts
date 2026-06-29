@@ -1,12 +1,15 @@
-import api from './api';
-import { Order, ApiResponse, PaginatedResponse } from '@types/index';
+import api from "./api";
+import { Order, ApiResponse, PaginatedResponse } from "@types/index";
 
 export const orderService = {
   // Lấy danh sách đơn hàng của người dùng
   async getMyOrders(page: number = 1, limit: number = 10) {
-    const response = await api.get<PaginatedResponse<Order>>('/orders/my-orders', {
-      params: { page, limit },
-    });
+    const response = await api.get<PaginatedResponse<Order>>(
+      "/orders/my-orders",
+      {
+        params: { page, limit },
+      },
+    );
     return response.data;
   },
 
@@ -22,13 +25,15 @@ export const orderService = {
     shippingAddress: string;
     paymentMethod: string;
   }) {
-    const response = await api.post<ApiResponse<Order>>('/orders', data);
+    const response = await api.post<ApiResponse<Order>>("/orders", data);
     return response.data.data;
   },
 
   // Cập nhật trạng thái đơn hàng (Admin)
   async updateOrderStatus(id: string, status: string) {
-    const response = await api.put<ApiResponse<Order>>(`/orders/${id}`, { status });
+    const response = await api.put<ApiResponse<Order>>(`/orders/${id}`, {
+      status,
+    });
     return response.data.data;
   },
 
@@ -40,7 +45,7 @@ export const orderService = {
 
   // Lấy danh sách tất cả đơn hàng (Admin)
   async getAllOrders(page: number = 1, limit: number = 10, filters?: any) {
-    const response = await api.get<PaginatedResponse<Order>>('/orders', {
+    const response = await api.get<PaginatedResponse<Order>>("/orders", {
       params: { page, limit, ...filters },
     });
     return response.data;
@@ -48,7 +53,7 @@ export const orderService = {
 
   // Quản lý tồn kho
   async getInventory() {
-    const response = await api.get('/inventory');
+    const response = await api.get("/inventory");
     return response.data;
   },
 

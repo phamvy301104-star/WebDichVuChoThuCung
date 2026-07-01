@@ -6,7 +6,7 @@ export interface User {
   phone?: string;
   address?: string;
   avatar?: string;
-  role: 'user' | 'admin' | 'staff';
+  role: "user" | "admin" | "staff";
   createdAt: string;
 }
 
@@ -52,7 +52,7 @@ export interface Brand {
   logo?: string;
 }
 
-// ==================== Service Types ====================
+
 export interface Service {
   id: string;
   name: string;
@@ -79,7 +79,7 @@ export interface Booking {
   service: Service;
   date: string;
   time: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: "pending" | "confirmed" | "completed" | "cancelled";
   createdAt: string;
 }
 
@@ -92,8 +92,24 @@ export interface Pet {
   age: number;
   image: string;
   description?: string;
+  price?: number;
   owner: User;
-  status: 'owned' | 'for_sale' | 'for_adoption';
+  status: "owned" | "for_sale" | "for_adoption";
+  createdAt: string;
+}
+
+export interface AdoptionRequest {
+  id: string;
+  petId: string;
+  petName: string;
+  petBreed: string;
+  petImage: string;
+  petPrice?: number;
+  requesterName: string;
+  requesterEmail: string;
+  requesterPhone: string;
+  reason?: string;
+  status: "pending" | "approved" | "rejected";
   createdAt: string;
 }
 
@@ -115,7 +131,7 @@ export interface Order {
   user: User;
   items: CartItem[];
   totalPrice: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   shippingAddress: string;
   paymentMethod: string;
   createdAt: string;

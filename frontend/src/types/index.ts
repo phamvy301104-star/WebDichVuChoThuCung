@@ -111,7 +111,8 @@ export interface Cart {
 }
 
 export interface Order {
-  id: string;
+  id?: string;
+  _id?: string;
   user: User;
   items: CartItem[];
   totalPrice: number;

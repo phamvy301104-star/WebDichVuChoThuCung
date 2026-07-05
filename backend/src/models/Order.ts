@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IOrder extends Document {
   user: mongoose.Types.ObjectId;
   items: Array<{
-    product: mongoose.Types.ObjectId;
+    product: mongoose.Types.ObjectId | string;
     quantity: number;
     price: number;
   }>;
@@ -25,7 +25,7 @@ const orderSchema = new Schema<IOrder>(
     items: [
       {
         product: {
-          type: Schema.Types.ObjectId,
+          type: Schema.Types.Mixed,
           ref: 'Product',
         },
         quantity: Number,
@@ -50,7 +50,15 @@ const orderSchema = new Schema<IOrder>(
       required: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+orderSchema.virtual('id').get(function () {
+  return this._id.toString();
+});
 
 export default mongoose.model<IOrder>('Order', orderSchema);

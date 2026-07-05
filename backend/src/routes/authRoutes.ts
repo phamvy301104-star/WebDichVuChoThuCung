@@ -1,12 +1,12 @@
 import { Router } from 'express';
+import { authController } from '../controllers/index';
+import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// Route templates sẽ được thêm ở đây
-// Ví dụ:
-// router.post('/register', registerController);
-// router.post('/login', loginController);
-// router.get('/me', authMiddleware, meController);
-// router.put('/profile', authMiddleware, updateProfileController);
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+router.get('/me', authMiddleware, authController.me);
+router.put('/profile', authMiddleware, authController.updateProfile);
 
 export default router;

@@ -1,5 +1,5 @@
 import api from './api';
-import { Pet, ApiResponse, PaginatedResponse } from '@types/index';
+import type { Pet, ApiResponse, PaginatedResponse } from '@/types';
 
 export const petService = {
   // Lấy danh sách thú cưng của người dùng

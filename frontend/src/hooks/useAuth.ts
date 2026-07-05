@@ -32,8 +32,13 @@ export const useAuth = () => {
     dispatch(setLoading(true));
     try {
       const response = await authService.register({ email, password, name });
+<<<<<<< HEAD
       const userData = response.data.user;
       const userToken = response.data.token;
+=======
+      const userData = response.data.data.user;
+      const userToken = response.data.data.token;
+>>>>>>> 23617816c2b272787c817933b1e49bfab5f75889
       localStorage.setItem(USER_KEY, JSON.stringify(userData));
       dispatch(loginSuccess({ user: userData, token: userToken }));
       return userData;

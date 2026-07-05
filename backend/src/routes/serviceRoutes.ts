@@ -1,12 +1,9 @@
 import { Router } from 'express';
+import { serviceController } from '../controllers/index';
 
 const router = Router();
 
-// Route templates sẽ được thêm ở đây
-// Ví dụ:
-// router.get('/', getServices);
-// router.get('/:id', getServiceById);
-// router.post('/bookings', authMiddleware, createBooking);
-// router.get('/my-bookings', authMiddleware, getMyBookings);
+router.get('/', serviceController.getServices);
+router.get('/:id', serviceController.getServiceById);
 
 export default router;

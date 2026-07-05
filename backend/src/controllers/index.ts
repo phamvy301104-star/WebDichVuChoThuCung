@@ -4,6 +4,10 @@ import mongoose from 'mongoose';
 import User from '../models/User';
 import Product from '../models/Product';
 import Order from '../models/Order';
+import Category from '../models/Category';
+import Brand from '../models/Brand';
+import Service from '../models/Service';
+import Pet from '../models/Pet';
 import { config } from '../config/environment';
 import { AuthRequest } from '../middleware/auth';
 import { Request, Response } from 'express';
@@ -131,8 +135,18 @@ export const authController = {
 };
 
 export const productController = {
-  getProducts: async (_req: Request, res: Response) => {
-    const products = await Product.find().populate('category brand');
+  getProducts: async (req: Request, res: Response) => {
+    const keyword = req.query.keyword as string;
+    const query: any = {};
+
+    if (keyword) {
+      query.$or = [
+        { name: { $regex: keyword, $options: 'i' } },
+        { description: { $regex: keyword, $options: 'i' } },
+      ];
+    }
+
+    const products = await Product.find(query).populate('category brand');
     res.json({ success: true, data: products });
   },
 
@@ -142,6 +156,166 @@ export const productController = {
       return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại.' });
     }
     res.json({ success: true, data: product });
+  },
+
+  createProduct: async (req: AuthRequest, res: Response) => {
+    const { name, description, price, quantity, category, brand, image } = req.body;
+    if (!name || !category || !brand) {
+      return res.status(400).json({ success: false, message: 'Tên sản phẩm, danh mục và thương hiệu là bắt buộc.' });
+    }
+
+    const product = await Product.create({
+      name,
+      description,
+      price,
+      quantity,
+      category,
+      brand,
+      image,
+      rating: 0,
+      reviews: 0,
+    });
+
+    const newProduct = await product.populate('category brand');
+    res.status(201).json({ success: true, data: newProduct, message: 'Sản phẩm đã được tạo.' });
+  },
+
+  updateProduct: async (req: AuthRequest, res: Response) => {
+    const updates = {
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+      quantity: req.body.quantity,
+      category: req.body.category,
+      brand: req.body.brand,
+      image: req.body.image,
+    };
+
+    const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true }).populate('category brand');
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại.' });
+    }
+
+    res.json({ success: true, data: product, message: 'Cập nhật sản phẩm thành công.' });
+  },
+
+  deleteProduct: async (req: AuthRequest, res: Response) => {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại.' });
+    }
+    res.json({ success: true, message: 'Sản phẩm đã được xóa.' });
+  },
+};
+
+export const categoryController = {
+  getCategories: async (_req: Request, res: Response) => {
+    const categories = await Category.find();
+    res.json({ success: true, data: categories });
+  },
+
+  createCategory: async (req: AuthRequest, res: Response) => {
+    const { name, description } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Tên danh mục là bắt buộc.' });
+    }
+
+    const existing = await Category.findOne({ name });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Danh mục đã tồn tại.' });
+    }
+
+    const category = await Category.create({ name, description });
+    res.status(201).json({ success: true, data: category, message: 'Danh mục đã được tạo.' });
+  },
+
+  updateCategory: async (req: AuthRequest, res: Response) => {
+    const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Danh mục không tồn tại.' });
+    }
+    res.json({ success: true, data: category, message: 'Cập nhật danh mục thành công.' });
+  },
+
+  deleteCategory: async (req: AuthRequest, res: Response) => {
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Danh mục không tồn tại.' });
+    }
+    res.json({ success: true, message: 'Danh mục đã được xóa.' });
+  },
+};
+
+export const brandController = {
+  getBrands: async (_req: Request, res: Response) => {
+    const brands = await Brand.find();
+    res.json({ success: true, data: brands });
+  },
+
+  createBrand: async (req: AuthRequest, res: Response) => {
+    const { name, logo } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Tên thương hiệu là bắt buộc.' });
+    }
+
+    const existing = await Brand.findOne({ name });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Thương hiệu đã tồn tại.' });
+    }
+
+    const brand = await Brand.create({ name, logo });
+    res.status(201).json({ success: true, data: brand, message: 'Thương hiệu đã được tạo.' });
+  },
+
+  updateBrand: async (req: AuthRequest, res: Response) => {
+    const brand = await Brand.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!brand) {
+      return res.status(404).json({ success: false, message: 'Thương hiệu không tồn tại.' });
+    }
+    res.json({ success: true, data: brand, message: 'Cập nhật thương hiệu thành công.' });
+  },
+
+  deleteBrand: async (req: AuthRequest, res: Response) => {
+    const brand = await Brand.findByIdAndDelete(req.params.id);
+    if (!brand) {
+      return res.status(404).json({ success: false, message: 'Thương hiệu không tồn tại.' });
+    }
+    res.json({ success: true, message: 'Thương hiệu đã được xóa.' });
+  },
+};
+
+export const serviceController = {
+  getServices: async (_req: Request, res: Response) => {
+    const services = await Service.find();
+    res.json({ success: true, data: services });
+  },
+
+  getServiceById: async (req: Request, res: Response) => {
+    const service = await Service.findById(req.params.id);
+    if (!service) {
+      return res.status(404).json({ success: false, message: 'Dịch vụ không tồn tại.' });
+    }
+    res.json({ success: true, data: service });
+  },
+};
+
+export const petController = {
+  getPetsForSale: async (_req: Request, res: Response) => {
+    const pets = await Pet.find({ status: 'for_sale' }).populate('owner');
+    res.json({ success: true, data: pets });
+  },
+
+  getPetsForAdoption: async (_req: Request, res: Response) => {
+    const pets = await Pet.find({ status: 'for_adoption' }).populate('owner');
+    res.json({ success: true, data: pets });
+  },
+
+  getPetById: async (req: Request, res: Response) => {
+    const pet = await Pet.findById(req.params.id).populate('owner');
+    if (!pet) {
+      return res.status(404).json({ success: false, message: 'Thú cưng không tồn tại.' });
+    }
+    res.json({ success: true, data: pet });
   },
 };
 

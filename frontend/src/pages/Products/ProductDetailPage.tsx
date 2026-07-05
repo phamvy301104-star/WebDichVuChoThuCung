@@ -1,20 +1,86 @@
-﻿import React from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Header } from "@components/Common/Header";
 import { Footer } from "@components/Common/Footer";
-import { mockProducts } from "../../data/mockProducts";
+import { productService } from "@services/productService";
 import { addToCart } from "@stores/slices/cartSlice";
+import type { Product } from "@/types";
 
 const fmt = (n: number) => n.toLocaleString("vi-VN") + "đ";
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const product = mockProducts.find((item) => item.id === id);
   const dispatch = useDispatch();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!product) {
+  useEffect(() => {
+    const loadProduct = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        if (!id) {
+          setError("Mã sản phẩm không hợp lệ.");
+          return;
+        }
+
+        const data = await productService.getProductById(id);
+        if (!data) {
+          setError("Sản phẩm không tìm thấy.");
+          return;
+        }
+
+        setProduct(data);
+      } catch (err: any) {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Không tìm thấy sản phẩm",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProduct();
+  }, [id]);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    dispatch(addToCart({ product, quantity: 1 }));
+    alert("Đã thêm vào giỏ hàng!");
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main
+          className="page-container"
+          style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px" }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              padding: 24,
+              textAlign: "center",
+              color: "#6b7280",
+            }}
+          >
+            Đang tải dữ liệu sản phẩm...
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (error || !product) {
     return (
       <>
         <Header />
@@ -30,7 +96,7 @@ export const ProductDetailPage: React.FC = () => {
               textAlign: "center",
             }}
           >
-            <h2>Sản phẩm không tìm thấy</h2>
+            <h2>{error || "Sản phẩm không tìm thấy"}</h2>
             <p>Vui lòng quay lại danh sách sản phẩm.</p>
             <button
               onClick={() => navigate("/products")}
@@ -45,11 +111,6 @@ export const ProductDetailPage: React.FC = () => {
       </>
     );
   }
-
-  const handleAddToCart = () => {
-    dispatch(addToCart({ product, quantity: 1 }));
-    alert("Đã thêm vào giỏ hàng!");
-  };
 
   return (
     <>
@@ -85,7 +146,7 @@ export const ProductDetailPage: React.FC = () => {
                 borderRadius: 6,
               }}
             >
-              {product.category.name}
+              {product.category?.name || "Không xác định"}
             </span>
             <h1
               style={{
@@ -156,7 +217,7 @@ export const ProductDetailPage: React.FC = () => {
                 }}
               >
                 <span style={{ color: "#6b7280" }}>Thương hiệu</span>
-                <b>{product.brand.name}</b>
+                <b>{product.brand?.name || "Không xác định"}</b>
               </div>
               <div
                 style={{

@@ -66,12 +66,6 @@ export const authService = {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem(USER_KEY);
-    // Gọi API logout nếu backend cần
-    try {
-      await api.post('/auth/logout');
-    } catch (error) {
-      console.log('Logout error:', error);
-    }
   },
 
   // Refresh token

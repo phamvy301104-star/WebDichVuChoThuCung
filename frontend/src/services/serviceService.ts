@@ -1,13 +1,11 @@
 import api from './api';
-import type { Service, Booking, BookingRequest, ApiResponse, PaginatedResponse } from '@/types';
+import type { Service, Booking, BookingRequest, ApiResponse } from '@/types';
 
 export const serviceService = {
   // Lấy danh sách dịch vụ
-  async getServices(page: number = 1, limit: number = 10) {
-    const response = await api.get<PaginatedResponse<Service>>('/services', {
-      params: { page, limit },
-    });
-    return response.data;
+  async getServices() {
+    const response = await api.get<ApiResponse<Service[]>>('/services');
+    return response.data.data || [];
   },
 
   // Lấy chi tiết dịch vụ

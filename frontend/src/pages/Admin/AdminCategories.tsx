@@ -1,21 +1,31 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import type { Category } from "@/types";
+import { productService } from "@services/productService";
 
-const initialCategories: Category[] = [
-  {
-    id: "c1",
-    name: "Thức ăn",
-    description: "Sản phẩm dinh dưỡng cho thú cưng.",
-  },
-  { id: "c2", name: "Phụ kiện", description: "Túi xách, dây dắt, đồ chơi." },
-  { id: "c3", name: "Chăm sóc", description: "Sản phẩm vệ sinh và làm đẹp." },
-];
+const emptyForm = { name: "", description: "" };
 
 export const AdminCategories: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [form, setForm] = useState({ ...emptyForm });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await productService.getCategories();
+        setCategories(data);
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || "Lỗi khi tải danh mục");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -23,40 +33,47 @@ export const AdminCategories: React.FC = () => {
       category.description?.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleSave = (event: React.FormEvent) => {
+  const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     const trimmedName = form.name.trim();
     if (!trimmedName) return;
 
-    if (editingId) {
-      setCategories((current) =>
-        current.map((item) =>
-          item.id === editingId ? { ...item, ...form } : item,
-        ),
-      );
-      setEditingId(null);
-    } else {
-      setCategories((current) => [
-        { id: `c${Date.now()}`, ...form },
-        ...current,
-      ]);
+    try {
+      if (editingId) {
+        const updatedCategory = await productService.updateCategory(editingId, form);
+        setCategories((current) =>
+          current.map((item) =>
+            (item.id || item._id) === editingId ? updatedCategory : item,
+          ),
+        );
+        setEditingId(null);
+      } else {
+        const createdCategory = await productService.createCategory(form);
+        setCategories((current) => [createdCategory as Category, ...current]);
+      }
+      setForm({ ...emptyForm });
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || "Không thể lưu danh mục");
     }
-
-    setForm({ name: "", description: "" });
   };
 
   const handleEdit = (category: Category) => {
-    setEditingId(category.id);
+    setEditingId(category.id || category._id || null);
     setForm({ name: category.name, description: category.description || "" });
   };
 
-  const handleDelete = (id: string) => {
-    setCategories((current) =>
-      current.filter((category) => category.id !== id),
-    );
-    if (editingId === id) {
-      setEditingId(null);
-      setForm({ name: "", description: "" });
+  const handleDelete = async (id: string) => {
+    try {
+      await productService.deleteCategory(id);
+      setCategories((current) =>
+        current.filter((category) => (category.id || category._id) !== id),
+      );
+      if (editingId === id) {
+        setEditingId(null);
+        setForm({ ...emptyForm });
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || "Không thể xóa danh mục");
     }
   };
 
@@ -84,7 +101,12 @@ export const AdminCategories: React.FC = () => {
           />
         </div>
 
-        <table className="admin-table">
+        {loading ? (
+          <div style={{ padding: 24, color: '#6b7280' }}>Đang tải danh mục...</div>
+        ) : error ? (
+          <div style={{ padding: 24, color: '#ef4444' }}>{error}</div>
+        ) : (
+          <table className="admin-table">
           <thead>
             <tr>
               <th>Tên danh mục</th>
@@ -93,26 +115,29 @@ export const AdminCategories: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredCategories.map((category) => (
-              <tr key={category.id}>
-                <td>{category.name}</td>
-                <td>{category.description}</td>
-                <td className="ap-actions">
-                  <button
-                    className="ap-action-btn"
-                    onClick={() => handleEdit(category)}
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    className="ap-action-btn ap-action-del"
-                    onClick={() => handleDelete(category.id)}
-                  >
-                    Xóa
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filteredCategories.map((category) => {
+              const id = category.id || category._id || '';
+              return (
+                <tr key={id}>
+                  <td>{category.name}</td>
+                  <td>{category.description}</td>
+                  <td className="ap-actions">
+                    <button
+                      className="ap-action-btn"
+                      onClick={() => handleEdit(category)}
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      className="ap-action-btn ap-action-del"
+                      onClick={() => handleDelete(id)}
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             {filteredCategories.length === 0 && (
               <tr>
                 <td colSpan={3}>Không có danh mục phù hợp.</td>
@@ -120,6 +145,7 @@ export const AdminCategories: React.FC = () => {
             )}
           </tbody>
         </table>
+        )}
       </div>
 
       <div className="ap-card ap-form-card">

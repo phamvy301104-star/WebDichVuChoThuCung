@@ -1,54 +1,77 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import type { Brand } from "@/types";
+import { productService } from "@services/productService";
 
-const initialBrands: Brand[] = [
-  { id: "b1", name: "Royal Canin" },
-  { id: "b2", name: "PetJoy" },
-  { id: "b3", name: "HappyPaws" },
-];
+const emptyForm = { name: "" };
 
 export const AdminBrands: React.FC = () => {
-  const [brands, setBrands] = useState<Brand[]>(initialBrands);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "" });
+  const [form, setForm] = useState({ ...emptyForm });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        const data = await productService.getBrands();
+        setBrands(data);
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || "Lỗi khi tải thương hiệu");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBrands();
+  }, []);
 
   const filteredBrands = brands.filter((brand) =>
     brand.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleSave = (event: React.FormEvent) => {
+  const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     const trimmed = form.name.trim();
     if (!trimmed) return;
 
-    if (editingId) {
-      setBrands((current) =>
-        current.map((item) =>
-          item.id === editingId ? { ...item, name: trimmed } : item,
-        ),
-      );
-      setEditingId(null);
-    } else {
-      setBrands((current) => [
-        { id: `b${Date.now()}`, name: trimmed },
-        ...current,
-      ]);
+    try {
+      if (editingId) {
+        const updatedBrand = await productService.updateBrand(editingId, form);
+        setBrands((current) =>
+          current.map((item) =>
+            (item.id || item._id) === editingId ? updatedBrand : item,
+          ),
+        );
+        setEditingId(null);
+      } else {
+        const createdBrand = await productService.createBrand(form);
+        setBrands((current) => [createdBrand as Brand, ...current]);
+      }
+      setForm({ ...emptyForm });
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || "Không thể lưu thương hiệu");
     }
-
-    setForm({ name: "" });
   };
 
   const handleEdit = (brand: Brand) => {
-    setEditingId(brand.id);
+    setEditingId(brand.id || brand._id || null);
     setForm({ name: brand.name });
   };
 
-  const handleDelete = (id: string) => {
-    setBrands((current) => current.filter((brand) => brand.id !== id));
-    if (editingId === id) {
-      setEditingId(null);
-      setForm({ name: "" });
+  const handleDelete = async (id: string) => {
+    try {
+      await productService.deleteBrand(id);
+      setBrands((current) =>
+        current.filter((brand) => (brand.id || brand._id) !== id),
+      );
+      if (editingId === id) {
+        setEditingId(null);
+        setForm({ ...emptyForm });
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || "Không thể xóa thương hiệu");
     }
   };
 
@@ -78,7 +101,12 @@ export const AdminBrands: React.FC = () => {
           />
         </div>
 
-        <table className="admin-table">
+        {loading ? (
+          <div style={{ padding: 24, color: '#6b7280' }}>Đang tải thương hiệu...</div>
+        ) : error ? (
+          <div style={{ padding: 24, color: '#ef4444' }}>{error}</div>
+        ) : (
+          <table className="admin-table">
           <thead>
             <tr>
               <th>Tên thương hiệu</th>
@@ -86,25 +114,28 @@ export const AdminBrands: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredBrands.map((brand) => (
-              <tr key={brand.id}>
-                <td>{brand.name}</td>
-                <td className="ap-actions">
-                  <button
-                    className="ap-action-btn"
-                    onClick={() => handleEdit(brand)}
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    className="ap-action-btn ap-action-del"
-                    onClick={() => handleDelete(brand.id)}
-                  >
-                    Xóa
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filteredBrands.map((brand) => {
+              const id = brand.id || brand._id || '';
+              return (
+                <tr key={id}>
+                  <td>{brand.name}</td>
+                  <td className="ap-actions">
+                    <button
+                      className="ap-action-btn"
+                      onClick={() => handleEdit(brand)}
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      className="ap-action-btn ap-action-del"
+                      onClick={() => handleDelete(id)}
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             {filteredBrands.length === 0 && (
               <tr>
                 <td colSpan={2}>Không có thương hiệu phù hợp.</td>
@@ -112,6 +143,7 @@ export const AdminBrands: React.FC = () => {
             )}
           </tbody>
         </table>
+        )}
       </div>
 
       <div className="ap-card ap-form-card">

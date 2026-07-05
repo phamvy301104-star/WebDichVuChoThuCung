@@ -1,13 +1,9 @@
 import { Router } from 'express';
+import { productController } from '../controllers/index';
 
 const router = Router();
 
-// Route templates sẽ được thêm ở đây
-// Ví dụ:
-// router.get('/', getProducts);
-// router.get('/:id', getProductById);
-// router.post('/', authMiddleware, adminMiddleware, createProduct);
-// router.put('/:id', authMiddleware, adminMiddleware, updateProduct);
-// router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
+router.get('/', productController.getProducts);
+router.get('/:id', productController.getProductById);
 
 export default router;

@@ -1,13 +1,11 @@
 import api from './api';
-import { Order, ApiResponse, PaginatedResponse } from '@types/index';
+import type { Order, ApiResponse } from '@/types';
 
 export const orderService = {
   // Lấy danh sách đơn hàng của người dùng
-  async getMyOrders(page: number = 1, limit: number = 10) {
-    const response = await api.get<PaginatedResponse<Order>>('/orders/my-orders', {
-      params: { page, limit },
-    });
-    return response.data;
+  async getMyOrders() {
+    const response = await api.get<ApiResponse<Order[]>>('/orders/my-orders');
+    return response.data.data || [];
   },
 
   // Lấy chi tiết đơn hàng
@@ -34,16 +32,14 @@ export const orderService = {
 
   // Hủy đơn hàng
   async cancelOrder(id: string) {
-    const response = await api.put(`/orders/${id}/cancel`);
-    return response.data;
+    const response = await api.put<ApiResponse<Order>>(`/orders/${id}/cancel`);
+    return response.data.data;
   },
 
   // Lấy danh sách tất cả đơn hàng (Admin)
-  async getAllOrders(page: number = 1, limit: number = 10, filters?: any) {
-    const response = await api.get<PaginatedResponse<Order>>('/orders', {
-      params: { page, limit, ...filters },
-    });
-    return response.data;
+  async getAllOrders() {
+    const response = await api.get<ApiResponse<Order[]>>('/orders');
+    return response.data.data || [];
   },
 
   // Quản lý tồn kho

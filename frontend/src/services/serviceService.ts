@@ -1,5 +1,5 @@
 import api from './api';
-import { Service, Booking, BookingRequest, ApiResponse, PaginatedResponse } from '@types/index';
+import type { Service, Booking, BookingRequest, ApiResponse, PaginatedResponse } from '@/types';
 
 export const serviceService = {
   // Lấy danh sách dịch vụ

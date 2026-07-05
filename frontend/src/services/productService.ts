@@ -1,5 +1,5 @@
 import api from './api';
-import { Product, Category, Brand, ApiResponse, PaginatedResponse } from '@types/index';
+import type { Product, Category, Brand, ApiResponse, PaginatedResponse } from '@/types';
 
 export const productService = {
   // Lấy danh sách sản phẩm

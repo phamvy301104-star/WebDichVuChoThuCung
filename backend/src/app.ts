@@ -8,7 +8,10 @@ import brandRoutes from './routes/brandRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import petRoutes from './routes/petRoutes';
 import orderRoutes from './routes/orderRoutes';
+import appointmentRoutes from './routes/appointmentRoutes';
+import staffRoutes from './routes/staffRoutes';
 import { notFound, errorHandler } from './middleware/errorHandler';
+
 
 dotenv.config();
 
@@ -35,6 +38,9 @@ app.use('/api/brands', brandRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/staff', staffRoutes);
+
 
 app.use(notFound);
 app.use(errorHandler);

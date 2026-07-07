@@ -1,11 +1,15 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export type ServiceStatus = 'ACTIVE' | 'INACTIVE';
+
 export interface IService extends Document {
   name: string;
   description: string;
+  category: string;
   price: number;
   duration: number;
   image?: string;
+  status: ServiceStatus;
   rating: number;
   reviews: number;
   createdAt: Date;
@@ -17,8 +21,19 @@ const serviceSchema = new Schema<IService>(
     name: {
       type: String,
       required: true,
+      trim: true,
     },
-    description: String,
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     price: {
       type: Number,
       required: true,
@@ -28,6 +43,12 @@ const serviceSchema = new Schema<IService>(
       required: true,
     },
     image: String,
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'INACTIVE'],
+      default: 'ACTIVE',
+      index: true,
+    },
     rating: {
       type: Number,
       default: 0,
@@ -41,3 +62,4 @@ const serviceSchema = new Schema<IService>(
 );
 
 export default mongoose.model<IService>('Service', serviceSchema);
+

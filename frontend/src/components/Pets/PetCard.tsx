@@ -1,5 +1,5 @@
 import React from "react";
-import { Pet } from "@types/index";
+import type { Pet } from "@/types";
 
 interface PetCardProps {
   pet: Pet;

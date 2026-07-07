@@ -1,13 +1,13 @@
 import { Router } from 'express';
+import { productController } from '../controllers/index';
+import { authMiddleware, adminMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// Route templates sẽ được thêm ở đây
-// Ví dụ:
-// router.get('/', getProducts);
-// router.get('/:id', getProductById);
-// router.post('/', authMiddleware, adminMiddleware, createProduct);
-// router.put('/:id', authMiddleware, adminMiddleware, updateProduct);
-// router.delete('/:id', authMiddleware, adminMiddleware, deleteProduct);
+router.get('/', productController.getProducts);
+router.get('/:id', productController.getProductById);
+router.post('/', authMiddleware, adminMiddleware, productController.createProduct);
+router.put('/:id', authMiddleware, adminMiddleware, productController.updateProduct);
+router.delete('/:id', authMiddleware, adminMiddleware, productController.deleteProduct);
 
 export default router;

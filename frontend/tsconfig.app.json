@@ -23,7 +23,9 @@
 
     /* Path aliases */
     "baseUrl": ".",
+    "ignoreDeprecations": "5.0",
     "paths": {
+      "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
       "@pages/*": ["src/pages/*"],
       "@stores/*": ["src/stores/*"],

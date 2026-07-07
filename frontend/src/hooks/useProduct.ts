@@ -13,7 +13,7 @@ export const useProduct = () => {
     dispatch(setLoading(true));
     try {
       const response = await productService.getProducts(pageNum, limit, filters);
-      dispatch(setProducts({ products: response.data, total: response.pagination.total }));
+      dispatch(setProducts({ products: response, total: response.length }));
     } catch (err: any) {
       dispatch(setError(err.message || 'Lỗi khi tải sản phẩm'));
     }
@@ -23,7 +23,7 @@ export const useProduct = () => {
     dispatch(setLoading(true));
     try {
       const product = await productService.getProductById(id);
-      dispatch(setSelectedProduct(product));
+      dispatch(setSelectedProduct(product || null));
       return product;
     } catch (err: any) {
       dispatch(setError(err.message || 'Lỗi khi tải chi tiết sản phẩm'));
@@ -34,7 +34,7 @@ export const useProduct = () => {
     dispatch(setLoading(true));
     try {
       const response = await productService.searchProducts(keyword);
-      dispatch(setProducts({ products: response.data, total: response.pagination.total }));
+      dispatch(setProducts({ products: response, total: response.length }));
     } catch (err: any) {
       dispatch(setError(err.message || 'Lỗi khi tìm kiếm'));
     }

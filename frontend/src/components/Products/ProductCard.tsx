@@ -1,5 +1,5 @@
 import React from "react";
-import { Product } from "@types/index";
+import type { Product } from "@/types";
 import { useDispatch } from "react-redux";
 import { addToCart } from "@stores/slices/cartSlice";
 

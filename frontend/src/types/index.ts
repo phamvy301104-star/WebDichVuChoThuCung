@@ -27,7 +27,8 @@ export interface AuthResponse {
 
 // ==================== Product Types ====================
 export interface Product {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   description: string;
   price: number;
@@ -41,13 +42,15 @@ export interface Product {
 }
 
 export interface Category {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   description?: string;
 }
 
 export interface Brand {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   logo?: string;
 }
@@ -127,7 +130,8 @@ export interface Cart {
 }
 
 export interface Order {
-  id: string;
+  id?: string;
+  _id?: string;
   user: User;
   items: CartItem[];
   totalPrice: number;

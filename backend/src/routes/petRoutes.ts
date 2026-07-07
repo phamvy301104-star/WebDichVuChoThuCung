@@ -1,12 +1,10 @@
 import { Router } from 'express';
+import { petController } from '../controllers/index';
 
 const router = Router();
 
-// Route templates sẽ được thêm ở đây
-// Ví dụ:
-// router.get('/my-pets', authMiddleware, getMyPets);
-// router.post('/', authMiddleware, createPet);
-// router.get('/:id', getPetById);
-// router.put('/:id', authMiddleware, updatePet);
+router.get('/for-sale', petController.getPetsForSale);
+router.get('/for-adoption', petController.getPetsForAdoption);
+router.get('/:id', petController.getPetById);
 
 export default router;

@@ -1,5 +1,7 @@
 import api from './api';
-import { AuthRequest, AuthResponse, User } from '@types/index';
+import type { AuthRequest, AuthResponse, User } from '@/types';
+
+const USER_KEY = 'petcare_user';
 
 export const authService = {
   // Đăng ký tài khoản
@@ -8,6 +10,7 @@ export const authService = {
     if (response.data.data?.token) {
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('refreshToken', response.data.data.refreshToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(response.data.data.user));
     }
     return response.data;
   },
@@ -18,6 +21,7 @@ export const authService = {
     if (response.data.data?.token) {
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('refreshToken', response.data.data.refreshToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(response.data.data.user));
     }
     return response.data;
   },
@@ -28,6 +32,7 @@ export const authService = {
     if (response.data.data?.token) {
       localStorage.setItem('token', response.data.data.token);
       localStorage.setItem('refreshToken', response.data.data.refreshToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(response.data.data.user));
     }
     return response.data;
   },
@@ -35,6 +40,9 @@ export const authService = {
   // Lấy thông tin người dùng hiện tại
   async getCurrentUser() {
     const response = await api.get<{ data: User }>('/auth/me');
+    if (response.data.data) {
+      localStorage.setItem(USER_KEY, JSON.stringify(response.data.data));
+    }
     return response.data.data;
   },
 
@@ -57,13 +65,7 @@ export const authService = {
   async logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    // Gọi API logout nếu backend cần
-    try {
-      await api.post('/auth/logout');
-    } catch (error) {
-      console.log('Logout error:', error);
-    }
+    localStorage.removeItem(USER_KEY);
   },
 
   // Refresh token

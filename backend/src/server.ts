@@ -1,8 +1,19 @@
 import app from './app';
+import { connectDB } from './config/database';
+import { config } from './config/environment';
 
-const PORT = process.env.PORT || 3000;
+const PORT = config.PORT;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
+const startServer = async () => {
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server đang chạy tại port ${PORT}`);
+    console.log(`Environment: ${config.NODE_ENV}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error('❌ Lỗi khởi động server:', error);
+  process.exit(1);
 });

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@hooks/useAuth';
-import '@styles/global.css';
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@hooks/useAuth";
+import "@styles/global.css";
 
 export const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -11,18 +11,21 @@ export const Header: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setDropdownOpen(false);
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -43,7 +46,9 @@ export const Header: React.FC = () => {
         </nav>
 
         <div className="header-actions">
-          <Link to="/cart" className="cart-icon" title="Giỏ hàng">🛒</Link>
+          <Link to="/cart" className="cart-icon" title="Giỏ hàng">
+            🛒
+          </Link>
 
           {isAuthenticated && user ? (
             <div className="user-menu" ref={dropdownRef}>
@@ -52,13 +57,18 @@ export const Header: React.FC = () => {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <div className="avatar-circle">
-                  {user.avatar
-                    ? <img src={user.avatar} alt={user.name} />
-                    : <span>{user.name.charAt(0).toUpperCase()}</span>
-                  }
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} />
+                  ) : (
+                    <span>{user.name.charAt(0).toUpperCase()}</span>
+                  )}
                 </div>
-                <span className="user-name-header">{user.name.split(' ').pop()}</span>
-                <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
+                <span className="user-name-header">
+                  {user.name.split(" ").pop()}
+                </span>
+                <span className="dropdown-arrow">
+                  {dropdownOpen ? "▲" : "▼"}
+                </span>
               </button>
 
               {dropdownOpen && (
@@ -71,30 +81,53 @@ export const Header: React.FC = () => {
                       <div className="dropdown-name">{user.name}</div>
                       <div className="dropdown-email">{user.email}</div>
                       <span className={`role-badge role-${user.role}`}>
-                        {user.role === 'admin' ? '👑 Admin' : user.role === 'staff' ? '🔧 Nhân viên' : '👤 Thành viên'}
+                        {user.role === "admin"
+                          ? "👑 Admin"
+                          : user.role === "staff"
+                            ? "🔧 Nhân viên"
+                            : "👤 Thành viên"}
                       </span>
                     </div>
                   </div>
                   <div className="dropdown-divider" />
-                  <Link to="/profile" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    to="/profile"
+                    className="dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
                     👤 Hồ sơ của tôi
                   </Link>
-                  <Link to="/orders" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    to="/orders"
+                    className="dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
                     📦 Đơn hàng
                   </Link>
-                  <Link to="/bookings" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    to="/bookings"
+                    className="dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
                     📅 Lịch đặt
                   </Link>
-                  {(user.role === 'admin' || user.role === 'staff') && (
+                  {(user.role === "admin" || user.role === "staff") && (
                     <>
                       <div className="dropdown-divider" />
-                      <Link to="/admin" className="dropdown-item dropdown-admin" onClick={() => setDropdownOpen(false)}>
+                      <Link
+                        to="/admin"
+                        className="dropdown-item dropdown-admin"
+                        onClick={() => setDropdownOpen(false)}
+                      >
                         ⚙️ Quản trị hệ thống
                       </Link>
                     </>
                   )}
                   <div className="dropdown-divider" />
-                  <button className="dropdown-item dropdown-logout" onClick={handleLogout}>
+                  <button
+                    className="dropdown-item dropdown-logout"
+                    onClick={handleLogout}
+                  >
                     🚪 Đăng xuất
                   </button>
                 </div>
@@ -102,8 +135,12 @@ export const Header: React.FC = () => {
             </div>
           ) : (
             <div className="auth-buttons">
-              <Link to="/auth/login" className="btn-login">Đăng nhập</Link>
-              <Link to="/auth/register" className="btn-register">Đăng ký</Link>
+              <Link to="/auth/login" className="btn-login">
+                Đăng nhập
+              </Link>
+              <Link to="/auth/register" className="btn-register">
+                Đăng ký
+              </Link>
             </div>
           )}
         </div>

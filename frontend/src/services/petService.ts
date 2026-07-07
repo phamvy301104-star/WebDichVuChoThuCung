@@ -1,11 +1,11 @@
 import api from './api';
-import { Pet, ApiResponse, PaginatedResponse } from '@types/index';
+import type { Pet, ApiResponse } from '@/types';
 
 export const petService = {
   // Lấy danh sách thú cưng của người dùng
   async getMyPets() {
-    const response = await api.get<PaginatedResponse<Pet>>('/pets/my-pets');
-    return response.data;
+    const response = await api.get<ApiResponse<Pet[]>>('/pets/my-pets');
+    return response.data.data || [];
   },
 
   // Lấy chi tiết thú cưng
@@ -33,19 +33,15 @@ export const petService = {
   },
 
   // Lấy danh sách thú cưng bán
-  async getPetsForSale(page: number = 1, limit: number = 10) {
-    const response = await api.get<PaginatedResponse<Pet>>('/pets/for-sale', {
-      params: { page, limit },
-    });
-    return response.data;
+  async getPetsForSale() {
+    const response = await api.get<ApiResponse<Pet[]>>('/pets/for-sale');
+    return response.data.data || [];
   },
 
   // Lấy danh sách thú cưng nhận nuôi
-  async getPetsForAdoption(page: number = 1, limit: number = 10) {
-    const response = await api.get<PaginatedResponse<Pet>>('/pets/for-adoption', {
-      params: { page, limit },
-    });
-    return response.data;
+  async getPetsForAdoption() {
+    const response = await api.get<ApiResponse<Pet[]>>('/pets/for-adoption');
+    return response.data.data || [];
   },
 
   // Gửi yêu cầu nhận nuôi

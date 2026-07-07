@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import type { Brand } from "@/types";
 import { productService } from "@services/productService";
 
@@ -41,7 +41,7 @@ export const AdminBrands: React.FC = () => {
         const updatedBrand = await productService.updateBrand(editingId, form);
         setBrands((current) =>
           current.map((item) =>
-            (item.id || item._id) === editingId ? (updatedBrand as Brand) : item,
+            (item.id || item._id) === editingId ? updatedBrand : item,
           ),
         );
         setEditingId(null);

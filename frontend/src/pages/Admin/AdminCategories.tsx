@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import type { Category } from "@/types";
 import { productService } from "@services/productService";
 
@@ -43,7 +43,7 @@ export const AdminCategories: React.FC = () => {
         const updatedCategory = await productService.updateCategory(editingId, form);
         setCategories((current) =>
           current.map((item) =>
-            (item.id || item._id) === editingId ? (updatedCategory as Category) : item,
+            (item.id || item._id) === editingId ? updatedCategory : item,
           ),
         );
         setEditingId(null);

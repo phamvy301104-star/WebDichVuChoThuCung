@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Header } from "@components/Common/Header";
 import { Footer } from "@components/Common/Footer";
 import { serviceService } from "@services/serviceService";
@@ -60,7 +60,7 @@ export const ServiceListPage: React.FC = () => {
         ) : (
           <div className="list-grid">
             {services.map((service) => (
-              <div key={service.id} className="card">
+              <div key={service.id || service._id} className="card">
                 <div className="card-icon">✂️</div>
                 <h3>{service.name}</h3>
                 <p>{service.description}</p>

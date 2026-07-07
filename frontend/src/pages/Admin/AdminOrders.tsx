@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import type { Order } from "@/types";
 import { orderService } from "@services/orderService";
 
@@ -81,7 +81,7 @@ export const AdminOrders: React.FC = () => {
     try {
       const updated = await orderService.updateOrderStatus(id, nextStatus);
       setOrders((current) =>
-        current.map((item) => ((item.id || item._id) === id ? (updated as Order) : item)),
+        current.map((item) => ((item.id || item._id) === id ? updated : item)),
       );
     } catch {
       alert("Cập nhật trạng thái không thành công.");
@@ -93,7 +93,7 @@ export const AdminOrders: React.FC = () => {
       const updated = await orderService.cancelOrder(id);
       setOrders((current) =>
         current.map((order) =>
-          (order.id || order._id) === id ? (updated as Order) : order,
+          (order.id || order._id) === id ? updated : order,
         ),
       );
     } catch {
@@ -177,7 +177,7 @@ export const AdminOrders: React.FC = () => {
                     {nextStatusMap[order.status] && (
                       <button
                         className="ap-action-btn"
-                        onClick={() => updateStatus(order.id || order._id || "")}
+                        onClick={() => updateStatus(order.id)}
                       >
                         Chuyển sang{" "}
                         {
@@ -191,7 +191,7 @@ export const AdminOrders: React.FC = () => {
                       order.status !== "delivered" && (
                         <button
                           className="ap-action-btn ap-action-del"
-                          onClick={() => cancelOrder(order.id || order._id || "")}
+                          onClick={() => cancelOrder(order.id)}
                         >
                           Hủy
                         </button>

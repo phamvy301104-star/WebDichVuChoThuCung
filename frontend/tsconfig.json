@@ -6,7 +6,7 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
@@ -18,7 +18,6 @@
       "@utils/*": ["src/utils/*"]
     },
 
-    "types": ["vite/client"],
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
 

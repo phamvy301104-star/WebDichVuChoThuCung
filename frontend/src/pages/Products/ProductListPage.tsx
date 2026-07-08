@@ -120,15 +120,27 @@ export const ProductListPage: React.FC = () => {
                 >
                   <div
                     style={{
-                      height: 130,
-                      background: "linear-gradient(135deg,#fef9f0,#fef3c7)",
+                      height: 160,
+                      background: "#f3f4f6",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "3.5rem",
+                      overflow: "hidden",
                     }}
                   >
-                    🐾
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <div style={{ fontSize: "3.5rem" }}>🐾</div>
+                    )}
                   </div>
                   <div style={{ padding: "14px 16px" }}>
                     <span

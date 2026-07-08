@@ -124,16 +124,35 @@ export const ProductDetailPage: React.FC = () => {
         >
           <div
             style={{
-              background: "linear-gradient(135deg,#fef9f0,#fef3c7)",
+              background: "#fff",
               borderRadius: 16,
               minHeight: 360,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "8rem",
+              overflow: "hidden",
             }}
           >
-            🐾
+            {product.image ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  minHeight: 360,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "8rem",
+                }}
+              >
+                🐾
+              </div>
+            )}
           </div>
           <div>
             <span

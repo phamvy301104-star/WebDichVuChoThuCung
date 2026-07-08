@@ -17,13 +17,14 @@ const cartSlice = createSlice({
   reducers: {
     addToCart: (state, action: PayloadAction<{ product: Product; quantity: number }>) => {
       const { product, quantity } = action.payload;
-      const existingItem = state.items.find((item) => item.productId === product.id);
+      const pid = (product._id || product.id) as string;
+      const existingItem = state.items.find((item) => item.productId === pid);
 
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
         state.items.push({
-          productId: product.id,
+          productId: pid,
           product,
           quantity,
           price: product.price,
@@ -44,7 +45,8 @@ const cartSlice = createSlice({
       const { productId, quantity } = action.payload;
       const item = state.items.find((item) => item.productId === productId);
       if (item) {
-        item.quantity = quantity;
+        // enforce minimum quantity of 1; if caller wants to remove, use removeFromCart
+        item.quantity = Math.max(1, Math.floor(quantity));
       }
       state.totalPrice = state.items.reduce((total, item) => total + item.price * item.quantity, 0);
       localStorage.setItem('cart', JSON.stringify(state.items));

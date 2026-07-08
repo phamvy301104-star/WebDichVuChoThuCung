@@ -1,13 +1,15 @@
 ﻿import React from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { Header } from "@components/Common/Header";
 import { Footer } from "@components/Common/Footer";
 import { RootState } from "@stores/store";
+import { removeFromCart, updateCartItem } from "@stores/slices/cartSlice";
 
 const fmt = (n: number) => n.toLocaleString("vi-VN") + "đ";
 
 export const CartPage: React.FC = () => {
+  const dispatch = useDispatch();
   const { items, totalPrice } = useSelector((state: RootState) => state.cart);
 
   return (
@@ -88,8 +90,63 @@ export const CartPage: React.FC = () => {
                     >
                       {item.product.name}
                     </div>
-                    <div style={{ color: "#6b7280", fontSize: "0.95rem" }}>
-                      {item.quantity} x {fmt(item.price)}
+                    <div
+                      style={{
+                        color: "#6b7280",
+                        fontSize: "0.95rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                      }}
+                    >
+                      {item.quantity >= 2 ? (
+                        <button
+                          type="button"
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 8,
+                            border: "1px solid #d1d5db",
+                            background: "#fff",
+                            cursor: "pointer",
+                          }}
+                          onClick={() =>
+                            dispatch(
+                              updateCartItem({
+                                productId: item.productId,
+                                quantity: item.quantity - 1,
+                              }),
+                            )
+                          }
+                        >
+                          -
+                        </button>
+                      ) : (
+                        <div style={{ width: 28, height: 28 }} />
+                      )}
+                      <span>{item.quantity}</span>
+                      <button
+                        type="button"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          border: "1px solid #d1d5db",
+                          background: "#fff",
+                          cursor: "pointer",
+                        }}
+                        onClick={() =>
+                          dispatch(
+                            updateCartItem({
+                              productId: item.productId,
+                              quantity: item.quantity + 1,
+                            }),
+                          )
+                        }
+                      >
+                        +
+                      </button>
+                      <span>{fmt(item.price)}</span>
                     </div>
                   </div>
                   <div
@@ -97,9 +154,27 @@ export const CartPage: React.FC = () => {
                       textAlign: "right",
                       fontWeight: 700,
                       color: "#ef4444",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      gap: 8,
                     }}
                   >
                     {fmt(item.price * item.quantity)}
+                    <button
+                      type="button"
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 999,
+                        background: "#fef2f2",
+                        color: "#b91c1c",
+                        border: "1px solid #fecaca",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => dispatch(removeFromCart(item.productId))}
+                    >
+                      Xóa
+                    </button>
                   </div>
                 </div>
               ))}

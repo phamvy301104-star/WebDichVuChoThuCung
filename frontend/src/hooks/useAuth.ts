@@ -15,10 +15,6 @@ export const useAuth = () => {
     dispatch(setLoading(true));
     try {
       const response = await authService.login({ email, password });
-<<<<<<< Updated upstream
-      console.log('Login response:', response);
-=======
->>>>>>> Stashed changes
       const userData = response.data.user;
       const userToken = response.data.token;
       localStorage.setItem(USER_KEY, JSON.stringify(userData));

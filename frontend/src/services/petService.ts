@@ -1,10 +1,16 @@
 import api from './api';
-import type { Pet, ApiResponse } from '@/types';
+import type { Pet, ApiResponse, AdoptionRequest } from '@/types';
 
 export const petService = {
   // Lấy danh sách thú cưng của người dùng
   async getMyPets() {
     const response = await api.get<ApiResponse<Pet[]>>('/pets/my-pets');
+    return response.data.data || [];
+  },
+
+  // Lấy tất cả thú cưng (Admin)
+  async getAllPets() {
+    const response = await api.get<ApiResponse<Pet[]>>('/pets');
     return response.data.data || [];
   },
 
@@ -44,10 +50,22 @@ export const petService = {
     return response.data.data || [];
   },
 
-  // Gửi yêu cầu nhận nuôi
-  async requestAdoption(petId: string) {
-    const response = await api.post(`/pets/${petId}/adoption-request`);
-    return response.data;
+  // Gửi yêu cầu nhận nuôi / mua
+  async requestAdoption(petId: string, data?: { requesterName?: string; requesterEmail?: string; requesterPhone?: string; reason?: string; appointmentDate?: string; appointmentTime?: string }) {
+    const response = await api.post<ApiResponse<AdoptionRequest>>(`/pets/${petId}/adoption-request`, data);
+    return response.data.data;
+  },
+
+  // Lấy tất cả yêu cầu nhận nuôi (Admin)
+  async getAllAdoptionRequests() {
+    const response = await api.get<ApiResponse<AdoptionRequest[]>>('/pets/adoption-requests');
+    return response.data.data || [];
+  },
+
+  // Cập nhật trạng thái yêu cầu nhận nuôi (Admin)
+  async updateAdoptionRequestStatus(id: string, status: 'approved' | 'rejected') {
+    const response = await api.put<ApiResponse<AdoptionRequest>>(`/pets/adoption-requests/${id}`, { status });
+    return response.data.data;
   },
 
   // AI nhận dạng giống loài thú cưng

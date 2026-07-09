@@ -64,7 +64,7 @@ export const AdoptionRequestsTable: React.FC<AdoptionRequestsTableProps> = ({
                 Giống loài
               </th>
               <th className="px-4 py-3.5 bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
-                Người yêu cầu nhận nuôi
+                Người yêu cầu
               </th>
               <th className="px-4 py-3.5 bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
                 Trạng thái
@@ -73,7 +73,10 @@ export const AdoptionRequestsTable: React.FC<AdoptionRequestsTableProps> = ({
                 Chi phí
               </th>
               <th className="px-4 py-3.5 bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
-                Lý do nhận nuôi
+                Lý do / Ghi chú
+              </th>
+              <th className="px-4 py-3.5 bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
+                Lịch hẹn xem
               </th>
               <th className="px-4 py-3.5 bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
                 Ngày gửi
@@ -103,9 +106,9 @@ export const AdoptionRequestsTable: React.FC<AdoptionRequestsTableProps> = ({
                     </span>
                   </td>
                   <td className="px-4 py-4 border-b border-slate-100 align-middle">
-                    <div className="font-semibold text-slate-800">{req.requesterName}</div>
-                    <div className="text-xs text-slate-500">{req.requesterEmail}</div>
-                    <div className="text-xs text-slate-400">{req.requesterPhone}</div>
+                    <div className="font-bold text-slate-800">{req.requesterName}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">📧 {req.requesterEmail}</div>
+                    <div className="text-xs text-[#3BB77E] font-bold mt-0.5">📞 {req.requesterPhone}</div>
                   </td>
                   <td className="px-4 py-4 border-b border-slate-100 align-middle">
                     <span
@@ -144,6 +147,16 @@ export const AdoptionRequestsTable: React.FC<AdoptionRequestsTableProps> = ({
                       <span className="text-slate-300 italic">Không có</span>
                     )}
                   </td>
+                  <td className="px-4 py-4 border-b border-slate-100 align-middle text-slate-700 text-xs font-semibold">
+                    {req.appointmentDate ? (
+                      <div className="flex flex-col">
+                        <span className="text-[#3BB77E] font-bold">📅 {new Date(req.appointmentDate).toLocaleDateString("vi-VN")}</span>
+                        <span className="text-slate-500">⏰ {req.appointmentTime || "Chưa chọn giờ"}</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">Không hẹn trước</span>
+                    )}
+                  </td>
                   <td className="px-4 py-4 border-b border-slate-100 align-middle text-slate-500 text-xs">
                     {new Date(req.createdAt).toLocaleDateString("vi-VN")}
                   </td>
@@ -171,7 +184,7 @@ export const AdoptionRequestsTable: React.FC<AdoptionRequestsTableProps> = ({
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="text-center py-8 text-slate-400 text-sm">
+                <td colSpan={10} className="text-center py-8 text-slate-400 text-sm">
                   Không tìm thấy yêu cầu nhận nuôi nào.
                 </td>
               </tr>

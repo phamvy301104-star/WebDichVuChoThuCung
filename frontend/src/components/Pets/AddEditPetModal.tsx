@@ -61,7 +61,7 @@ export const AddEditPetModal: React.FC<AddEditPetModalProps> = ({
     if (isOpen && !editingPet) {
       const imagesForSpecies =
         SAMPLE_IMAGES[formSpecies as keyof typeof SAMPLE_IMAGES] ||
-        SAMPLE_IMAGES["Khác"];
+        SAMPLE_IMAGES["Chó"];
       setFormImage(imagesForSpecies[0]);
     }
   }, [formSpecies, isOpen, editingPet]);
@@ -141,7 +141,6 @@ export const AddEditPetModal: React.FC<AddEditPetModalProps> = ({
                 <option value="Chó">Chó 🐕</option>
                 <option value="Mèo">Mèo 🐱</option>
                 <option value="Thỏ">Thỏ 🐇</option>
-                <option value="Khác">Khác 🐾</option>
               </select>
             </div>
           </div>
@@ -229,6 +228,29 @@ export const AddEditPetModal: React.FC<AddEditPetModalProps> = ({
             )}
           </div>
 
+          <div className="flex flex-col gap-1.5 mb-3">
+            <label className="text-xs font-bold text-slate-600">
+              Hoặc tải ảnh lên từ thiết bị
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-slate-200 file:text-xs file:font-bold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100 cursor-pointer outline-none"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    if (typeof reader.result === "string") {
+                      setFormImage(reader.result);
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+          </div>
+
           {/* Sample images chooser */}
           <div className="mb-4">
             <label className="text-xs font-bold text-slate-600 block mb-2">
@@ -237,7 +259,7 @@ export const AddEditPetModal: React.FC<AddEditPetModalProps> = ({
             <div className="flex gap-2.5 flex-wrap">
               {(
                 SAMPLE_IMAGES[formSpecies as keyof typeof SAMPLE_IMAGES] ||
-                SAMPLE_IMAGES["Khác"]
+                SAMPLE_IMAGES["Chó"]
               ).map((img, idx) => (
                 <button
                   key={idx}

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IPet extends Document {
   name: string;
@@ -8,7 +8,7 @@ export interface IPet extends Document {
   image: string;
   description?: string;
   owner: mongoose.Types.ObjectId;
-  status: 'owned' | 'for_sale' | 'for_adoption';
+  status: "owned" | "for_sale" | "for_adoption";
   price?: number;
   quantity?: number;
   createdAt: Date;
@@ -33,25 +33,22 @@ const petSchema = new Schema<IPet>(
       type: Number,
       required: true,
     },
-    image: {
-      type: String,
-      required: true,
-    },
+    image: String,
     description: String,
     owner: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
     status: {
       type: String,
-      enum: ['owned', 'for_sale', 'for_adoption'],
-      default: 'owned',
+      enum: ["owned", "for_sale", "for_adoption"],
+      default: "owned",
     },
     price: Number,
     quantity: Number,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model<IPet>('Pet', petSchema);
+export default mongoose.model<IPet>("Pet", petSchema);

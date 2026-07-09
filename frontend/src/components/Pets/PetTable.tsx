@@ -128,7 +128,7 @@ export const PetTable: React.FC<PetTableProps> = ({
             {filteredPets.length > 0 ? (
               filteredPets.map((pet) => (
                 <tr
-                  key={pet.id}
+                  key={pet.id || pet._id}
                   className="hover:bg-slate-50/80 transition-all"
                 >
                   <td className="px-4 py-4 border-b border-slate-100 align-middle">
@@ -211,7 +211,7 @@ export const PetTable: React.FC<PetTableProps> = ({
                       <button
                         className="bg-red-50 hover:bg-red-100 border border-red-100 text-red-500 p-1.5 rounded-lg text-xs transition-all cursor-pointer"
                         title="Xóa"
-                        onClick={() => onDelete(pet.id)}
+                        onClick={() => onDelete(pet.id || pet._id || "")}
                       >
                         🗑️
                       </button>

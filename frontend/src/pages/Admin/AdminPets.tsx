@@ -3,11 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@stores/store";
 import { Pet, AdoptionRequest } from "../../types";
 import { setPets as setReduxPets } from "@stores/slices/petSlice";
-import {
-  INITIAL_MOCK_PETS,
-  INITIAL_ADOPTION_REQUESTS,
-  MOCK_ADMIN,
-} from "@components/Pets/petConstants";
+import { petService } from "@services/petService";
 
 import { PetTable } from "@components/Pets/PetTable";
 import { AdoptionRequestsTable } from "@components/Pets/AdoptionRequestsTable";
@@ -22,6 +18,7 @@ export const AdminPets: React.FC = () => {
 
   const [pets, setPets] = useState<Pet[]>([]);
   const [requests, setRequests] = useState<AdoptionRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [toast, setToast] = useState<{
     message: string;
@@ -33,58 +30,6 @@ export const AdminPets: React.FC = () => {
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [deletingPetId, setDeletingPetId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const storedPets = localStorage.getItem("petcare_pets");
-    if (storedPets) {
-      try {
-        let parsed = JSON.parse(storedPets) as Pet[];
-        let migrated = false;
-        parsed = parsed.map((p) => {
-          if (
-            (p.status as string) === "adopted" ||
-            (p.status as string) === "sold"
-          ) {
-            migrated = true;
-            return { ...p, status: "for_adoption" as const };
-          }
-          return p;
-        });
-        if (migrated) {
-          localStorage.setItem("petcare_pets", JSON.stringify(parsed));
-        }
-        setPets(parsed);
-        dispatch(setReduxPets(parsed));
-      } catch (err) {
-        setPets(INITIAL_MOCK_PETS);
-        dispatch(setReduxPets(INITIAL_MOCK_PETS));
-        localStorage.setItem("petcare_pets", JSON.stringify(INITIAL_MOCK_PETS));
-      }
-    } else {
-      setPets(INITIAL_MOCK_PETS);
-      dispatch(setReduxPets(INITIAL_MOCK_PETS));
-      localStorage.setItem("petcare_pets", JSON.stringify(INITIAL_MOCK_PETS));
-    }
-
-    const storedRequests = localStorage.getItem("petcare_adoption_requests");
-    if (storedRequests) {
-      try {
-        setRequests(JSON.parse(storedRequests));
-      } catch (err) {
-        setRequests(INITIAL_ADOPTION_REQUESTS);
-        localStorage.setItem(
-          "petcare_adoption_requests",
-          JSON.stringify(INITIAL_ADOPTION_REQUESTS),
-        );
-      }
-    } else {
-      setRequests(INITIAL_ADOPTION_REQUESTS);
-      localStorage.setItem(
-        "petcare_adoption_requests",
-        JSON.stringify(INITIAL_ADOPTION_REQUESTS),
-      );
-    }
-  }, [dispatch]);
-
   const showToast = (
     message: string,
     type: "success" | "error" = "success",
@@ -94,6 +39,27 @@ export const AdminPets: React.FC = () => {
       setToast(null);
     }, 3000);
   };
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [petsData, requestsData] = await Promise.all([
+        petService.getAllPets(),
+        petService.getAllAdoptionRequests(),
+      ]);
+      setPets(petsData);
+      dispatch(setReduxPets(petsData));
+      setRequests(requestsData);
+    } catch (err: any) {
+      showToast("Lỗi khi tải dữ liệu thú cưng!", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [dispatch]);
 
   const handleOpenAddModal = () => {
     setEditingPet(null);
@@ -110,7 +76,7 @@ export const AdminPets: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleSavePet = (formData: {
+  const handleSavePet = async (formData: {
     name: string;
     species: string;
     breed: string;
@@ -120,89 +86,98 @@ export const AdminPets: React.FC = () => {
     price: number;
     status: "owned" | "for_sale" | "for_adoption";
   }) => {
-    let updatedPets: Pet[] = [];
-
-    if (editingPet) {
-      updatedPets = pets.map((p) =>
-        p.id === editingPet.id
-          ? {
-              ...p,
-              ...formData,
-            }
-          : p,
-      );
-      showToast("Cập nhật thông tin thú cưng thành công!");
-    } else {
-      const newPet: Pet = {
-        id: `pet_${Date.now()}`,
-        ...formData,
-        owner: currentUser || MOCK_ADMIN,
-        createdAt: new Date().toISOString(),
-      };
-      updatedPets = [...pets, newPet];
-      showToast("Thêm thú cưng mới thành công!");
+    try {
+      if (editingPet) {
+        const id = editingPet.id || editingPet._id || "";
+        const updated = await petService.updatePet(id, formData);
+        if (updated) {
+          setPets((current) =>
+            current.map((p) =>
+              (p.id || p._id) === id ? updated : p,
+            ),
+          );
+          dispatch(setReduxPets(pets.map((p) => (p.id || p._id) === id ? updated : p)));
+          showToast("Cập nhật thông tin thú cưng thành công!");
+        }
+      } else {
+        const created = await petService.createPet(formData);
+        if (created) {
+          setPets((current) => [created, ...current]);
+          dispatch(setReduxPets([created, ...pets]));
+          showToast("Thêm thú cưng mới thành công!");
+        }
+      }
+      setIsAddEditModalOpen(false);
+    } catch (err: any) {
+      showToast(err.message || "Lỗi khi lưu thông tin thú cưng!", "error");
     }
-
-    setPets(updatedPets);
-    dispatch(setReduxPets(updatedPets));
-    localStorage.setItem("petcare_pets", JSON.stringify(updatedPets));
-    setIsAddEditModalOpen(false);
   };
 
-  const handleDeletePet = () => {
+  const handleDeletePet = async () => {
     if (!deletingPetId) return;
-    const updatedPets = pets.filter((p) => p.id !== deletingPetId);
-    setPets(updatedPets);
-    dispatch(setReduxPets(updatedPets));
-    localStorage.setItem("petcare_pets", JSON.stringify(updatedPets));
-
-    const updatedRequests = requests.map((r) =>
-      r.petId === deletingPetId && r.status === "pending"
-        ? { ...r, status: "rejected" as const }
-        : r,
-    );
-    setRequests(updatedRequests);
-    localStorage.setItem(
-      "petcare_adoption_requests",
-      JSON.stringify(updatedRequests),
-    );
-
-    setIsDeleteModalOpen(false);
-    setDeletingPetId(null);
-    showToast("Xóa thú cưng thành công!");
+    try {
+      await petService.deletePet(deletingPetId);
+      setPets((current) => current.filter((p) => (p.id || p._id) !== deletingPetId));
+      dispatch(setReduxPets(pets.filter((p) => (p.id || p._id) !== deletingPetId)));
+      
+      // Auto-reject any pending requests associated with the deleted pet
+      setRequests((current) =>
+        current.map((r) =>
+          r.petId === deletingPetId && r.status === "pending"
+            ? { ...r, status: "rejected" as const }
+            : r,
+        ),
+      );
+      
+      setIsDeleteModalOpen(false);
+      setDeletingPetId(null);
+      showToast("Xóa thú cưng thành công!");
+    } catch (err: any) {
+      showToast(err.message || "Lỗi khi xóa thú cưng!", "error");
+    }
   };
 
-  const handleApproveAdoption = (request: AdoptionRequest) => {
-    const updatedRequests = requests.map((r) =>
-      r.id === request.id ? { ...r, status: "approved" as const } : r,
-    );
-    setRequests(updatedRequests);
-    localStorage.setItem(
-      "petcare_adoption_requests",
-      JSON.stringify(updatedRequests),
-    );
-
-    const updatedPets = pets.map((p) =>
-      p.id === request.petId ? { ...p, status: "for_adoption" as const } : p,
-    );
-    setPets(updatedPets);
-    dispatch(setReduxPets(updatedPets));
-    localStorage.setItem("petcare_pets", JSON.stringify(updatedPets));
-
-    showToast(`Đã duyệt yêu cầu nhận nuôi bé ${request.petName}!`);
+  const handleApproveAdoption = async (request: AdoptionRequest) => {
+    try {
+      const updatedRequest = await petService.updateAdoptionRequestStatus(request.id, "approved");
+      if (updatedRequest) {
+        setRequests((current) =>
+          current.map((r) =>
+            r.id === request.id ? updatedRequest : r,
+          ),
+        );
+        
+        // Update pet's status to 'owned' since it has been adopted
+        setPets((current) =>
+          current.map((p) =>
+            (p.id || p._id) === request.petId ? { ...p, status: "owned" as const } : p,
+          ),
+        );
+        dispatch(setReduxPets(pets.map((p) =>
+          (p.id || p._id) === request.petId ? { ...p, status: "owned" as const } : p,
+        )));
+        
+        showToast(`Đã duyệt yêu cầu cho bé ${request.petName}!`);
+      }
+    } catch (err: any) {
+      showToast(err.message || "Lỗi khi duyệt yêu cầu!", "error");
+    }
   };
 
-  const handleRejectAdoption = (request: AdoptionRequest) => {
-    const updatedRequests = requests.map((r) =>
-      r.id === request.id ? { ...r, status: "rejected" as const } : r,
-    );
-    setRequests(updatedRequests);
-    localStorage.setItem(
-      "petcare_adoption_requests",
-      JSON.stringify(updatedRequests),
-    );
-
-    showToast(`Đã từ chối yêu cầu nhận nuôi bé ${request.petName}.`, "error");
+  const handleRejectAdoption = async (request: AdoptionRequest) => {
+    try {
+      const updatedRequest = await petService.updateAdoptionRequestStatus(request.id, "rejected");
+      if (updatedRequest) {
+        setRequests((current) =>
+          current.map((r) =>
+            r.id === request.id ? updatedRequest : r,
+          ),
+        );
+        showToast(`Đã từ chối yêu cầu cho bé ${request.petName}.`, "error");
+      }
+    } catch (err: any) {
+      showToast(err.message || "Lỗi khi từ chối yêu cầu!", "error");
+    }
   };
 
   return (
@@ -249,12 +224,16 @@ export const AdminPets: React.FC = () => {
           className={`px-4 py-2.5 text-sm font-bold transition-all relative cursor-pointer ${activeTab === "requests" ? 'text-[#3BB77E] after:content-[""] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-0.5 after:bg-[#3BB77E] after:rounded-t' : "text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-t-lg"}`}
           onClick={() => setActiveTab("requests")}
         >
-          📝 Phê duyệt nhận nuôi (
+          📝 Yêu cầu nhận nuôi / mua (
           {requests.filter((r) => r.status === "pending").length} chờ duyệt)
         </button>
       </div>
 
-      {activeTab === "pets" ? (
+      {loading ? (
+        <div style={{ padding: 48, textAlign: "center", color: "#6b7280" }}>
+          Đang tải dữ liệu...
+        </div>
+      ) : activeTab === "pets" ? (
         <PetTable
           pets={pets}
           onEdit={handleOpenEditModal}

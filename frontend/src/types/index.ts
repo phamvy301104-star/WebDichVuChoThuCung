@@ -57,7 +57,8 @@ export interface Brand {
 
 
 export interface Service {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   description: string;
   price: number;
@@ -88,7 +89,8 @@ export interface Booking {
 
 // ==================== Pet Types ====================
 export interface Pet {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   species: string;
   breed: string;
@@ -112,6 +114,8 @@ export interface AdoptionRequest {
   requesterEmail: string;
   requesterPhone: string;
   reason?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
 }

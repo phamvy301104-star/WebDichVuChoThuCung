@@ -15,10 +15,7 @@ export const SAMPLE_IMAGES = {
   ],
   Thỏ: [
     "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&q=80&w=300",
-    "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&q=80&w=300",
-  ],
-  Khác: [
-    "https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&q=80&w=300",
+    "https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&q=80&w=300",
   ],
 };
 

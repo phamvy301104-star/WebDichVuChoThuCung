@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { Header } from "@components/Common/Header";
 import { Footer } from "@components/Common/Footer";
 import { serviceService } from "@services/serviceService";
+import { appointmentService } from "@services/appointmentService";
 import type { RootState } from "@stores/store";
 import type { Service } from "@/types";
 
@@ -104,36 +105,38 @@ export const AppointmentFormPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    const v = validate();
-    if (v) {
-      setError(v);
-      setStep("form");
-      return;
-    }
+  const v = validate();
 
-    try {
-      setError(null);
-      // Backend expects: { service, customerName, phone, email?, petName, petType, appointmentDate, appointmentTime, note? }
-      // FE serviceService.createBooking map từ BookingRequest sang backend.
-      // BookingRequest type trong project hiện dùng: { serviceId, date, time, petId?, notes?, ... }
-      await serviceService.createBooking({
-        serviceId: form.serviceId,
-        date: form.date,
-        time: form.time,
-        petName: form.petName,
-        petType: form.petType,
-        notes: form.notes,
-        customerName: form.customerName,
-        phone: form.phone,
-        email: form.email || undefined,
-      } as any);
+  if (v) {
+    setError(v);
+    setStep("form");
+    return;
+  }
 
-      // Backend tự set status = "PENDING"
-      navigate("/my-appointments");
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Gửi lịch hẹn thất bại");
-    }
-  };
+  try {
+    setError(null);
+
+    await appointmentService.createAppointment({
+      serviceId: form.serviceId,
+      customerName: form.customerName,
+      phone: form.phone,
+      email: form.email || undefined,
+      petName: form.petName,
+      petType: form.petType,
+      date: form.date,
+      time: form.time,
+      notes: form.notes || undefined,
+    });
+
+    navigate("/my-appointments");
+  } catch (err: any) {
+    setError(
+      err.response?.data?.message ||
+      err.message ||
+      "Gửi lịch hẹn thất bại"
+    );
+  }
+};
 
   const handleCancel = () => {
     navigate("/services");
@@ -336,14 +339,11 @@ export const AppointmentFormPage: React.FC = () => {
                     </>
                   )}
                 </section>
-
-
               </div>
             </>
           )}
         </div>
       </main>
-
       <Footer />
     </>
   );

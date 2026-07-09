@@ -1,18 +1,16 @@
 import { Router } from 'express';
+import { staffController } from '../controllers/index';
 import { authMiddleware, adminMiddleware } from '../middleware/auth';
-import { staffController } from '../controllers/staffController';
 
 const router = Router();
 
-// Danh sách / tìm kiếm
+// ==================== PUBLIC / AUTH ROUTES ====================
 router.get('/', staffController.getAll);
 router.get('/:id', staffController.getById);
 
-// Admin CRUD
+// ==================== ADMIN ROUTES ====================
 router.post('/', authMiddleware, adminMiddleware, staffController.create);
-router.patch('/:id', authMiddleware, adminMiddleware, staffController.update);
-router.put('/:id', authMiddleware, adminMiddleware, staffController.update);
+router.patch('/:id', authMiddleware, adminMiddleware, staffController.update); // Giữ duy nhất PATCH để update một phần
 router.delete('/:id', authMiddleware, adminMiddleware, staffController.remove);
 
 export default router;
-

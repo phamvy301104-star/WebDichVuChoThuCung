@@ -1,73 +1,121 @@
-import api from "./api";
-import type { ApiResponse, Booking, BookingRequest } from "@/types";
+import api from './api';
+import type { ApiResponse } from '@/types';
+import type {Booking,BookingRequest,} from '@/types/booking';
 
-const toStatus = (s: string) => s;
+
+const normalizeBooking = (b: any): Booking => ({
+  id: b._id ?? b.id,
+  user: b.user,
+  service: b.service,
+  customerName: b.customerName,
+  phone: b.phone,
+  email: b.email,
+  petName: b.petName,
+  petType: b.petType,
+  appointmentDate: b.appointmentDate ? String(b.appointmentDate).split('T')[0] : '', // Trả về dạng YYYY-MM-DD
+  appointmentTime: b.appointmentTime,
+  note: b.note,
+  status: b.status,
+  staff: b.staff,
+  createdAt: b.createdAt,
+  updatedAt: b.updatedAt,
+});
 
 export const appointmentService = {
-  // ==================== API appointments ====================
+  // =========================
+  // Appointment
+  // =========================
+
+  // Tạo lịch hẹn
+  async createAppointment(data: BookingRequest) {
+    const bePayload = {
+      service: data.serviceId,
+      customerName: data.customerName,
+      phone: data.phone,
+      email: data.email,
+      petName: data.petName,
+      petType: data.petType,
+      appointmentDate: data.appointmentDate,
+      appointmentTime: data.appointmentTime,
+      note: data.note,
+    };
+
+    const response = await api.post<ApiResponse<Booking>>('/appointments', bePayload);
+    return normalizeBooking(response.data.data);
+  },
+
+  // Danh sách lịch hẹn (Admin)
   async getAppointments() {
-    const response = await api.get<ApiResponse<Booking[]>>("/appointments");
-    return response.data.data || response.data;
+    const response = await api.get<ApiResponse<Booking[]>>(
+      '/appointments'
+    );
+
+    return (response.data.data ?? []).map(normalizeBooking);
   },
 
+  // Lịch của tôi
   async getMyAppointments() {
-    const response = await api.get<ApiResponse<Booking[]>>("/appointments/my");
-    return response.data.data || response.data;
+    const response = await api.get<ApiResponse<Booking[]>>(
+      '/appointments/my'
+    );
+
+    return response.data.data ?? [];
   },
 
-  // GET /appointments (fallback cho demo)
-  async getAllAppointments() {
-    const response = await api.get<ApiResponse<Booking[]>>("/appointments");
-    return response.data.data || response.data;
-  },
-
+  // Chi tiết lịch
   async getAppointmentById(id: string) {
-    const response = await api.get<ApiResponse<Booking>>(`/appointments/${id}`);
-    return response.data.data || response.data;
+    const response = await api.get<ApiResponse<Booking>>(
+      `/appointments/${id}`
+    );
+
+    return response.data.data;
   },
 
+  // Cập nhật thông tin lịch
+  // async updateAppointment(
+  //   id: string,
+  //   data: Partial<BookingRequest>
+  // ) {
+  //   const response = await api.patch<ApiResponse<Booking>>(
+  //     `/appointments/${id}`,
+  //     data
+  //   );
 
+  //   return response.data.data;
+  // },
 
+  // Cập nhật trạng thái
+  async updateAppointmentStatus(
+    id: string,
+    status: string
+  ) {
+    const response = await api.patch<ApiResponse<Booking>>(
+      `/appointments/${id}/status`,
+      {
+        status: status.toLowerCase(),
+      }
+    );
+
+    return response.data.data;
+  },
+
+  // Hủy lịch
   async cancelAppointment(id: string) {
-    // Backend đang dùng status dạng lowercase: cancelled
-    return this.updateAppointmentStatus(id, "cancelled");
+    return this.updateAppointmentStatus(id, 'cancelled');
   },
 
+  // Phân công nhân viên
+  async assignStaff(
+    id: string,
+    staffId: string
+  ) {
+    const response = await api.patch<ApiResponse<Booking>>(
+      `/appointments/${id}/assign-staff`,
+      {
+        staffId,
+      }
+    );
 
-
-  // ==================== Backward compat ====================
-  async createAppointment(payload: any) {
-    const response = await api.post<ApiResponse<Booking>>("/appointments", payload);
-    return response.data.data || response.data;
+    return response.data.data;
   },
-
-  // ==================== Update appointment ====================
-  // Backend có thể hỗ trợ PATCH /appointments/:id để cập nhật thông tin.
-  // Nếu backend không có route này thì FE sẽ fail khi gọi.
-  async updateAppointment(id: string, payload: Partial<BookingRequest> & { [k: string]: any }) {
-    const response = await api.patch<ApiResponse<Booking>>(`/appointments/${id}`, payload);
-    return response.data.data || response.data;
-  },
-
-  // Alias theo yêu cầu
-  async updateAppointmentStatus(id: string, status: string) {
-    // Backend đang dùng status dạng lowercase: cancelled/pending/confirmed/...
-    const normalized = String(status).toLowerCase();
-    const response = await api.patch<ApiResponse<Booking>>(`/appointments/${id}/status`, {
-      status: normalized,
-    });
-    return response.data.data || response.data;
-  },
-
-
-
-  async updateAppointmentStatusRaw(id: string, status: string) {
-    const response = await api.patch<ApiResponse<Booking>>(`/appointments/${id}/status`, {
-      status: toStatus(status),
-    });
-    return response.data.data || response.data;
-  },
-
 };
-
-

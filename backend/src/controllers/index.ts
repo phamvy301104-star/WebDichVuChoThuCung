@@ -13,6 +13,11 @@ import { config } from '../config/environment';
 import { AuthRequest } from '../middleware/auth';
 import { Request, Response } from 'express';
 
+// tách serviceControlle và appointmentController ra khỏi file này để dễ quản lý
+import { serviceController } from './serviceController';
+import { appointmentController } from './appointmentController';
+import { staffController } from './staffController';
+
 const signToken = (user: any) => {
   return jwt.sign(
     {
@@ -285,113 +290,6 @@ export const brandController = {
   },
 };
 
-export const serviceController = {
-  getServices: async (req: Request, res: Response) => {
-    const { status } = req.query;
-    const filter: any = {};
-
-    // Nếu không có filter thì admin vẫn có thể xem toàn bộ.
-    // User-side sẽ gọi ?status=ACTIVE.
-    if (status) {
-      filter.status = status;
-    }
-
-    const services = await Service.find(filter).sort({ createdAt: -1 });
-    res.json({ success: true, data: services });
-  },
-
-  getServiceById: async (req: Request, res: Response) => {
-    const service = await Service.findById(req.params.id);
-    if (!service) {
-      return res.status(404).json({ success: false, message: 'Dịch vụ không tồn tại.' });
-    }
-    res.json({ success: true, data: service });
-  },
-
-  createService: async (req: AuthRequest, res: Response) => {
-    const { name, description, category, price, duration, image, status } = req.body;
-
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ success: false, message: 'Tên dịch vụ là bắt buộc.' });
-    }
-    if (!description || typeof description !== 'string') {
-      return res.status(400).json({ success: false, message: 'Mô tả là bắt buộc.' });
-    }
-    if (!category || typeof category !== 'string') {
-      return res.status(400).json({ success: false, message: 'Danh mục là bắt buộc.' });
-    }
-    if (price === undefined || price === null || Number.isNaN(Number(price))) {
-      return res.status(400).json({ success: false, message: 'Giá là bắt buộc và phải là số.' });
-    }
-    if (duration === undefined || duration === null || Number.isNaN(Number(duration))) {
-      return res.status(400).json({ success: false, message: 'Thời gian là bắt buộc và phải là số.' });
-    }
-
-    const service = await Service.create({
-      name: String(name).trim(),
-      description: String(description).trim(),
-      category: String(category).trim(),
-      price: Number(price),
-      duration: Number(duration),
-      image: image ? String(image) : undefined,
-      status: status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
-    });
-
-    res.status(201).json({ success: true, data: service, message: 'Dịch vụ đã được tạo.' });
-  },
-
-  updateService: async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
-    const { name, description, category, price, duration, image, status } = req.body;
-
-    const updates: any = {};
-    if (name !== undefined) updates.name = String(name).trim();
-    if (description !== undefined) updates.description = String(description).trim();
-    if (category !== undefined) updates.category = String(category).trim();
-    if (price !== undefined) updates.price = Number(price);
-    if (duration !== undefined) updates.duration = Number(duration);
-    if (image !== undefined) updates.image = image ? String(image) : undefined;
-
-    // Toggle/soft-delete theo status
-    if (status !== undefined) {
-      // Client có thể gửi status='inactive'/'hidden' hoặc 'INACTIVE'
-      const normalized = String(status).toUpperCase();
-      updates.status =
-        normalized === 'INACTIVE' || normalized === 'INACTIVATE' || normalized === 'HIDDEN' || normalized === 'INACTIVE'
-          ? 'INACTIVE'
-          : 'ACTIVE';
-    }
-
-    // Validate tối thiểu khi cập nhật
-    if (updates.price !== undefined && Number.isNaN(Number(updates.price))) {
-      return res.status(400).json({ success: false, message: 'Giá phải là số.' });
-    }
-    if (updates.duration !== undefined && Number.isNaN(Number(updates.duration))) {
-      return res.status(400).json({ success: false, message: 'Thời gian phải là số.' });
-    }
-
-    const service = await Service.findByIdAndUpdate(id, updates, { new: true });
-    if (!service) {
-      return res.status(404).json({ success: false, message: 'Dịch vụ không tồn tại.' });
-    }
-
-    res.json({ success: true, data: service, message: 'Cập nhật dịch vụ thành công.' });
-  },
-
-  deleteService: async (req: AuthRequest, res: Response) => {
-    // Theo yêu cầu: không xóa thật mà chuyển status = INACTIVE.
-    const { id } = req.params;
-    const service = await Service.findByIdAndUpdate(id, { status: 'INACTIVE' }, { new: true });
-
-    if (!service) {
-      return res.status(404).json({ success: false, message: 'Dịch vụ không tồn tại.' });
-    }
-
-    res.json({ success: true, data: service, message: 'Ẩn dịch vụ thành công.' });
-  },
-};
-
-
 
 export const petController = {
   getPetsForSale: async (_req: Request, res: Response) => {
@@ -520,130 +418,10 @@ export const orderController = {
   },
 };
 
-export const appointmentController = {
-  // POST /api/appointments
-  create: async (req: AuthRequest, res: Response) => {
-    const { service, customerName, phone, email, petName, petType, appointmentDate, appointmentTime, note } = req.body;
-    if (!service || !customerName || !phone || !petName || !petType || !appointmentDate || !appointmentTime) {
-      return res.status(400).json({ success: false, message: 'Vui long dien day du thong tin bat buoc.' });
-    }
-
-    const booking = await Booking.create({
-      user: req.user?.id || undefined,
-      service,
-      customerName,
-      phone,
-      email,
-      petName,
-      petType,
-      appointmentDate: new Date(appointmentDate),
-      appointmentTime,
-      note,
-      status: 'pending',
-    });
-
-    const populated = await booking.populate('service', 'name price');
-    res.status(201).json({ success: true, data: populated, message: 'Dat lich thanh cong!' });
-  },
-
-  // GET /api/appointments
-  getAll: async (req: Request, res: Response) => {
-    const { status, date } = req.query;
-    const filter: any = {};
-    if (status) filter.status = status;
-
-    if (date) {
-      const d = new Date(date as string);
-      const start = new Date(d);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(d);
-      end.setHours(23, 59, 59, 999);
-      filter.appointmentDate = { $gte: start, $lte: end };
-    }
-
-    const bookings = await Booking.find(filter)
-      .populate('service', 'name price')
-      .populate('user', 'name email')
-      .populate('staff', 'name')
-      .sort({ createdAt: -1 });
-
-    res.json({ success: true, data: bookings });
-  },
-
-  // GET /api/appointments/my
-  getMine: async (req: AuthRequest, res: Response) => {
-    // Back-end hiện tại có thể chưa lấy userId ổn định cho demo.
-    // Ưu tiên filter theo user; nếu không có user thì fallback theo phone hoặc trả tất cả.
-    const userId = req.user?.id;
-    const phoneQuery = (req.query?.phone as string) || undefined;
-
-    let filter: any = {};
-
-    if (userId) {
-      filter.user = userId;
-    } else if (phoneQuery) {
-      filter.phone = phoneQuery;
-    }
-
-    const bookings = await Booking.find(filter)
-      .populate('service', 'name price')
-      .populate('staff', 'name')
-      .sort({ createdAt: -1 });
-
-    res.json({ success: true, data: bookings });
-  },
-
-  // GET /api/appointments/:id
-  getById: async (req: Request, res: Response) => {
-    const booking = await Booking.findById(req.params.id)
-      .populate('service', 'name price duration')
-      .populate('user', 'name email')
-      .populate('staff', 'name');
-
-    if (!booking) {
-      return res.status(404).json({ success: false, message: 'Lich hen khong ton tai.' });
-    }
-
-    res.json({ success: true, data: booking });
-  },
-
-  // PATCH /api/appointments/:id/status
-  updateStatus: async (req: AuthRequest, res: Response) => {
-    const { status } = req.body;
-    const valid = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled'];
-    if (!status || !valid.includes(status)) {
-      return res.status(400).json({ success: false, message: 'Trang thai khong hop le.' });
-    }
-
-    const booking = await Booking.findByIdAndUpdate(req.params.id, { status }, { new: true })
-      .populate('service', 'name')
-      .populate('user', 'name')
-      .populate('staff', 'name');
-
-    if (!booking) {
-      return res.status(404).json({ success: false, message: 'Lich hen khong ton tai.' });
-    }
-
-    res.json({ success: true, data: booking, message: 'Cap nhat trang thai thanh cong.' });
-  },
-
-  // PATCH /api/appointments/:id/assign-staff
-  assignStaff: async (req: AuthRequest, res: Response) => {
-    const { staffId } = req.body;
-    if (!staffId) {
-      return res.status(400).json({ success: false, message: 'staffId la bat buoc.' });
-    }
-
-    const booking = await Booking.findByIdAndUpdate(req.params.id, { staff: staffId }, { new: true })
-      .populate('service', 'name')
-      .populate('user', 'name')
-      .populate('staff', 'name');
-
-    if (!booking) {
-      return res.status(404).json({ success: false, message: 'Lich hen khong ton tai.' });
-    }
-
-    res.json({ success: true, data: booking, message: 'Phan cong nhan vien thanh cong.' });
-  },
+export {
+  serviceController,
+  appointmentController,
+  staffController
 };
+
 

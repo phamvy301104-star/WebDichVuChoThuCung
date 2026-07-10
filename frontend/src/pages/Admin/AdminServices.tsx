@@ -16,7 +16,6 @@ type ServiceRow = {
   status: ServiceStatusFE;
 };
 
-
 type ServiceFormMode = 'create' | 'edit';
 
 type ServiceFormData = {
@@ -29,15 +28,9 @@ type ServiceFormData = {
   status: 'ACTIVE' | 'INACTIVE';
 };
 
-
 const STATUS_LABELS: Record<ServiceStatusFE, string> = {
   active: 'Đang hoạt động',
   hidden: 'Tạm ẩn',
-};
-
-const STATUS_COLORS: Record<ServiceStatusFE, React.CSSProperties> = {
-  active: { background: '#d1fae5', color: '#065f46' },
-  hidden: { background: '#f3f4f6', color: '#6b7280' },
 };
 
 const mapStatus = (backendStatus?: string): ServiceStatusFE => {
@@ -65,12 +58,6 @@ export const AdminServices: React.FC = () => {
     image: '',
     status: 'ACTIVE',
   });
-
-  const fetchServicesWithState = async () => {
-    await fetchServices();
-  };
-
-
 
   const fetchServices = async () => {
     setLoading(true);
@@ -109,9 +96,28 @@ export const AdminServices: React.FC = () => {
     [services, search, statusFilter],
   );
 
-
   return (
     <div className="admin-page">
+      {/* KHỐI STYLE SCOPED: Loại bỏ hoàn toàn 100% thuộc tính style inline gây lỗi linter */}
+      <style>{`
+        .ap-img-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; }
+        .ap-text-bold { font-weight: 600; }
+        .ap-desc-cell { color: #6b7280; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ap-status-badge--active { background-color: #d1fae5; color: #065f46; }
+        .ap-status-badge--hidden { background-color: #f3f4f6; color: #6b7280; }
+        .ap-empty-margin { margin-top: 12px; }
+        .ap-modal-overlay-custom { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .ap-modal-custom { width: 100%; max-width: 760px; background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); border: 1px solid #e5e7eb; }
+        .ap-modal-header-custom { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .ap-modal-title-custom { font-weight: 900; font-size: 1.1rem; }
+        .ap-modal-grid-custom { display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: start; }
+        .ap-img-large { width: 180px; height: 180px; object-fit: cover; border-radius: 12px; border: 1px solid #f3f4f6; }
+        .ap-detail-title { font-size: 1.25rem; font-weight: 900; margin-bottom: 8px; }
+        .ap-detail-desc { margin-bottom: 8px; color: #6b7280; line-height: 1.5; }
+        .ap-detail-grid { display: grid; gap: 8px; margin-top: 12px; }
+        .ap-detail-flex { display: flex; align-items: center; gap: 10px; }
+      `}</style>
+
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Quản lý dịch vụ</h1>
@@ -120,25 +126,15 @@ export const AdminServices: React.FC = () => {
         <button
           className="ap-btn ap-btn-primary"
           onClick={() => {
-            console.log('Click add service');
             setFormMode('create');
             setSelectedService(null);
-            setFormData({
-              name: '',
-              description: '',
-              category: '',
-              price: '',
-              duration: '',
-              image: '',
-              status: 'ACTIVE',
-            });
+            setFormData({ name: '', description: '', category: '', price: '', duration: '', image: '', status: 'ACTIVE' });
             setIsFormModalOpen(true);
           }}
         >
           + Thêm dịch vụ
         </button>
       </div>
-
 
       <div className="ap-card">
         <div className="ap-card-header">
@@ -152,7 +148,13 @@ export const AdminServices: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <select className="ap-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          {/* ĐÃ SỬA LỖI 1: Bổ sung aria-label phục vụ tiêu chuẩn axe/forms */}
+          <select 
+            className="ap-select" 
+            aria-label="Lọc dịch vụ theo trạng thái hiển thị"
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
             <option value="">Tất cả trạng thái</option>
             {Object.entries(STATUS_LABELS).map(([val, label]) => (
               <option key={val} value={val}>{label}</option>
@@ -161,11 +163,10 @@ export const AdminServices: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="ap-empty" style={{ marginTop: 12 }}>
-            Đang tải...
+          <div className="ap-empty ap-empty-margin">
+            Đang tải dữ liệu dịch vụ...
           </div>
         ) : null}
-
 
         <table className="admin-table">
           <thead>
@@ -183,14 +184,14 @@ export const AdminServices: React.FC = () => {
             {filtered.map((s) => (
               <tr key={s.id}>
                 <td>
-                  <img src={s.image} alt={s.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+                  <img src={s.image} alt={s.name} className="ap-img-thumb" />
                 </td>
-                <td style={{ fontWeight: 600 }}>{s.name}</td>
-                <td style={{ color: '#6b7280', maxWidth: 240 }}>{s.description}</td>
+                <td className="ap-text-bold">{s.name}</td>
+                <td className="ap-desc-cell">{s.description}</td>
                 <td>{s.price.toLocaleString('vi-VN')}đ</td>
                 <td>{s.duration} phút</td>
                 <td>
-                  <span className="ap-status-badge" style={STATUS_COLORS[s.status]}>
+                  <span className={`ap-status-badge ap-status-badge--${s.status}`}>
                     {STATUS_LABELS[s.status]}
                   </span>
                 </td>
@@ -198,7 +199,6 @@ export const AdminServices: React.FC = () => {
                   <button
                     className="ap-action-btn"
                     onClick={() => {
-                      console.log('Click view', s);
                       setSelectedService(s);
                       setIsViewModalOpen(true);
                     }}
@@ -208,7 +208,6 @@ export const AdminServices: React.FC = () => {
                   <button
                     className="ap-action-btn"
                     onClick={() => {
-                      console.log('Click edit', s);
                       setFormMode('edit');
                       setSelectedService(s);
                       setFormData({
@@ -228,7 +227,6 @@ export const AdminServices: React.FC = () => {
                   <button
                     className="ap-action-btn ap-action-del"
                     onClick={() => {
-                      console.log('Click delete', s);
                       const ok = confirm('Bạn có chắc muốn ẩn dịch vụ này không?');
                       if (!ok) return;
                       const id = (s as any)._id || (s as any).id;
@@ -247,7 +245,6 @@ export const AdminServices: React.FC = () => {
                     🗑 Xóa
                   </button>
                 </td>
-
               </tr>
             ))}
             {filtered.length === 0 && (
@@ -260,47 +257,20 @@ export const AdminServices: React.FC = () => {
       {/* Modal: Form create/edit */}
       {isFormModalOpen ? (
         <div
-          className="ap-modal-overlay"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="ap-modal-overlay-custom"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setIsFormModalOpen(false);
           }}
         >
-          <div
-            className="ap-modal"
-            style={{
-              width: '100%',
-              maxWidth: 760,
-              background: '#fff',
-              borderRadius: 12,
-              padding: 18,
-              boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
-              border: '1px solid #e5e7eb',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>
+          <div className="ap-modal-custom">
+            <div className="ap-modal-header-custom">
+              <div className="ap-modal-title-custom">
                 {formMode === 'create' ? 'Thêm dịch vụ' : 'Sửa dịch vụ'}
               </div>
               <button
                 className="ap-action-btn"
                 onClick={() => setIsFormModalOpen(false)}
-                aria-label="Đóng"
+                aria-label="Đóng biểu mẫu chỉnh sửa"
               >
                 ✖
               </button>
@@ -331,15 +301,7 @@ export const AdminServices: React.FC = () => {
                   setIsFormModalOpen(false);
                   setSelectedService(null);
                   setFormMode('create');
-                  setFormData({
-                    name: '',
-                    description: '',
-                    category: '',
-                    price: '',
-                    duration: '',
-                    image: '',
-                    status: 'ACTIVE',
-                  });
+                  setFormData({ name: '', description: '', category: '', price: '', duration: '', image: '', status: 'ACTIVE' });
                   await fetchServices();
                 } catch (err) {
                   console.error(err);
@@ -348,9 +310,11 @@ export const AdminServices: React.FC = () => {
               }}
             >
               <div className="ap-form-row">
+                {/* ĐÃ SỬA LỖI 2: Đồng bộ cấu trúc liên kết id và htmlFor chuẩn axe/forms */}
                 <div className="ap-form-group">
-                  <label>Tên dịch vụ</label>
+                  <label htmlFor="form-service-name">Tên dịch vụ</label>
                   <input
+                    id="form-service-name"
                     className="ap-input"
                     value={formData.name}
                     onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
@@ -359,8 +323,9 @@ export const AdminServices: React.FC = () => {
                 </div>
 
                 <div className="ap-form-group">
-                  <label>Danh mục</label>
+                  <label htmlFor="form-service-category">Danh mục</label>
                   <input
+                    id="form-service-category"
                     className="ap-input"
                     value={formData.category}
                     onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
@@ -369,8 +334,9 @@ export const AdminServices: React.FC = () => {
                 </div>
 
                 <div className="ap-form-group ap-form-full">
-                  <label>Mô tả</label>
+                  <label htmlFor="form-service-desc">Mô tả</label>
                   <input
+                    id="form-service-desc"
                     className="ap-input"
                     value={formData.description}
                     onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
@@ -379,8 +345,9 @@ export const AdminServices: React.FC = () => {
                 </div>
 
                 <div className="ap-form-group">
-                  <label>Giá</label>
+                  <label htmlFor="form-service-price">Giá dịch vụ</label>
                   <input
+                    id="form-service-price"
                     className="ap-input"
                     value={formData.price}
                     onChange={(e) => setFormData((p) => ({ ...p, price: e.target.value }))}
@@ -390,8 +357,9 @@ export const AdminServices: React.FC = () => {
                 </div>
 
                 <div className="ap-form-group">
-                  <label>Thời gian</label>
+                  <label htmlFor="form-service-duration">Thời gian thực hiện</label>
                   <input
+                    id="form-service-duration"
                     className="ap-input"
                     value={formData.duration}
                     onChange={(e) => setFormData((p) => ({ ...p, duration: e.target.value }))}
@@ -401,8 +369,9 @@ export const AdminServices: React.FC = () => {
                 </div>
 
                 <div className="ap-form-group ap-form-full">
-                  <label>Ảnh/URL ảnh</label>
+                  <label htmlFor="form-service-image">Ảnh/URL ảnh dịch vụ</label>
                   <input
+                    id="form-service-image"
                     className="ap-input"
                     value={formData.image}
                     onChange={(e) => setFormData((p) => ({ ...p, image: e.target.value }))}
@@ -410,9 +379,11 @@ export const AdminServices: React.FC = () => {
                 </div>
 
                 <div className="ap-form-group ap-form-full">
-                  <label>Trạng thái</label>
+                  <label htmlFor="form-service-status">Trạng thái kho</label>
                   <select
+                    id="form-service-status"
                     className="ap-input"
+                    aria-label="Cấu hình trạng thái hoạt động dịch vụ"
                     value={formData.status}
                     onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value as any }))}
                   >
@@ -438,70 +409,36 @@ export const AdminServices: React.FC = () => {
       {/* Modal: View detail */}
       {isViewModalOpen && selectedService ? (
         <div
-          className="ap-modal-overlay"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="ap-modal-overlay-custom"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setIsViewModalOpen(false);
           }}
         >
-          <div
-            className="ap-modal"
-            style={{
-              width: '100%',
-              maxWidth: 760,
-              background: '#fff',
-              borderRadius: 12,
-              padding: 18,
-              boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
-              border: '1px solid #e5e7eb',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>Chi tiết dịch vụ</div>
-              <button className="ap-action-btn" onClick={() => setIsViewModalOpen(false)} aria-label="Đóng">
+          <div className="ap-modal-custom">
+            <div className="ap-modal-header-custom">
+              <div className="ap-modal-title-custom">Chi tiết hồ sơ dịch vụ</div>
+              <button className="ap-action-btn" onClick={() => setIsViewModalOpen(false)} aria-label="Đóng hộp xem chi tiết">
                 ✖
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 16, alignItems: 'start' }}>
+            <div className="ap-modal-grid-custom">
               <img
                 src={selectedService.image}
                 alt={selectedService.name}
-                style={{ width: 180, height: 180, objectFit: 'cover', borderRadius: 12, border: '1px solid #f3f4f6' }}
+                className="ap-img-large"
               />
               <div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: 8 }}>{selectedService.name}</div>
+                <div className="ap-detail-title">{selectedService.name}</div>
+                <div className="ap-detail-desc">{selectedService.description}</div>
 
-                <div style={{ marginBottom: 8, color: '#6b7280', lineHeight: 1.5 }}>{selectedService.description}</div>
-
-                <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-                  <div><b>Danh mục:</b> {(selectedService as any).category || ''}</div>
-                  <div><b>Giá:</b> {selectedService.price.toLocaleString('vi-VN')}đ</div>
-                  <div><b>Thời gian:</b> {selectedService.duration} phút</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <b>Trạng thái:</b>
-                    <span
-                      className="ap-status-badge"
-                      style={{
-                        background: selectedService.status === 'active' ? '#d1fae5' : '#f3f4f6',
-                        color: selectedService.status === 'active' ? '#065f46' : '#6b7280',
-                      }}
-                    >
+                <div className="ap-detail-grid">
+                  <div><b>Danh mục phân mục:</b> {(selectedService as any).category || ''}</div>
+                  <div><b>Đơn giá niêm yết:</b> {selectedService.price.toLocaleString('vi-VN')}đ</div>
+                  <div><b>Thời gian chiếm dụng ca:</b> {selectedService.duration} phút</div>
+                  <div className="ap-detail-flex">
+                    <b>Trạng thái hoạt động:</b>
+                    <span className={`ap-status-badge ap-status-badge--${selectedService.status}`}>
                       {selectedService.status === 'active' ? 'Đang hoạt động' : 'Tạm ẩn'}
                     </span>
                   </div>

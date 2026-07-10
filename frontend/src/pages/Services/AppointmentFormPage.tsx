@@ -1,78 +1,82 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { Header } from "@components/Common/Header";
-import { Footer } from "@components/Common/Footer";
-import { serviceService } from "@services/serviceService";
-import { appointmentService } from "@services/appointmentService";
-import type { RootState } from "@stores/store";
-import type { Service } from "@/types";
+import { useSelector, useDispatch } from "react-redux";
+import { Header } from "@/components/Common/Header";
+import { Footer } from "@/components/Common/Footer";
+import { serviceService } from "@/services/serviceService";
+import { 
+  createAppointmentThunk, 
+  updateBookingDraft, 
+  clearBookingDraft 
+} from "@/stores/slices/appointmentSlice";
+import type { RootState, AppDispatch } from "@/stores/store";
+import type { Service } from "@/types/service";
 
 type Step = "form" | "confirm";
 
-type AppointmentFormState = {
-  serviceId: string;
-  customerName: string;
-  phone: string;
-  email: string;
-  petName: string;
-  petType: string;
-  date: string;
-  time: string;
-  notes: string;
-};
-
 export const AppointmentFormPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
+  const { serviceId } = useParams<{ serviceId: string }>();
+
+  // Lấy trạng thái đăng nhập và profile của user (nếu có) để tự điền form
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  // Lấy dữ liệu bản nháp form và các trạng thái loading/error từ Redux Store toàn cục
+  const { bookingFormDraft, loading, error: reduxError } = useSelector((state: RootState) => state.appointment);
 
   const [loadingService, setLoadingService] = useState(false);
   const [service, setService] = useState<Service | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
+  const [localError, setLocalError] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("form");
 
-  const { serviceId } = useParams();
-
-
-  const [form, setForm] = useState<AppointmentFormState>({
-    serviceId: serviceId ?? "",
-    customerName: "",
-    phone: "",
-    email: "",
-    petName: "",
-    petType: "",
-    date: "",
-    time: "",
-    notes: "",
+  // ĐÃ SỬA: Đồng bộ hóa dữ liệu form ưu tiên lấy từ bản nháp Redux ra trước
+  const [form, setForm] = useState({
+    service: serviceId ?? bookingFormDraft.service ?? "",
+    customerName: bookingFormDraft.customerName ?? "",
+    phone: bookingFormDraft.phone ?? "",
+    email: bookingFormDraft.email ?? "",
+    petName: bookingFormDraft.petName ?? "",
+    petType: bookingFormDraft.petType ?? "",
+    appointmentDate: bookingFormDraft.appointmentDate ?? "",
+    appointmentTime: bookingFormDraft.appointmentTime ?? "",
+    note: bookingFormDraft.note ?? "",
   });
 
+  // 1. Luồng tải dữ liệu dịch vụ (Cho phép cả khách vãng lai truy cập)
   useEffect(() => {
-    if (!isAuthenticated) {
-      // vẫn bảo vệ đăng nhập
-      navigate(`/auth/login?redirect=/booking/${serviceId ?? ""}&serviceId=${serviceId ?? ""}`);
-      return;
-    }
-
-    if (!form.serviceId) {
-      setError("Thiếu serviceId");
+    if (!form.service) {
+      setLocalError("Thông tin dịch vụ yêu cầu không hợp lệ.");
       return;
     }
 
     setLoadingService(true);
     serviceService
-      .getServiceById(form.serviceId)
+      .getServiceById(form.service)
       .then((s) => setService(s ?? null))
-      .catch((err: any) => setError(err.response?.data?.message || err.message || "Lỗi tải dịch vụ"))
+      .catch((err: any) => setLocalError(err.message || "Lỗi tải thông tin dịch vụ."))
       .finally(() => setLoadingService(false));
-  }, [form.serviceId, isAuthenticated, navigate]);
+  }, [form.service]);
 
+  // 2. ĐÃ THÊM: Tính năng Pre-fill thông tin tự động nếu khách hàng đã đăng nhập tài khoản
   useEffect(() => {
-    // khi route param thay đổi, sync lại form.serviceId
-    if (serviceId && form.serviceId !== serviceId) {
-      setForm((prev) => ({ ...prev, serviceId: serviceId ?? "" }));
+    if (isAuthenticated && user) {
+      setForm((prev) => ({
+        ...prev,
+        customerName: prev.customerName || user.name || "",
+        phone: prev.phone || user.phone || "",
+        email: prev.email || user.email || "",
+      }));
     }
-  }, [serviceId, form.serviceId]);
+  }, [isAuthenticated, user]);
+
+  // 3. ĐÃ THÊM: Lưu bản nháp vào Redux Store theo thời gian thực (Real-time Auto-Save Draft)
+  const handleInputChange = (field: string, value: string) => {
+    setForm((prev) => {
+      const updated = { ...prev, [field]: value };
+      dispatch(updateBookingDraft(updated)); // Đẩy thẳng vào Redux bọc giữ dữ liệu
+      return updated;
+    });
+  };
 
   const computedSummary = useMemo(() => {
     if (!service) return null;
@@ -83,74 +87,73 @@ export const AppointmentFormPage: React.FC = () => {
     };
   }, [service]);
 
+  // ĐÃ THÊM: Chốt chặn giao diện khống chế không cho chọn ngày trong quá khứ
+  const minDateString = useMemo(() => {
+    return new Date().toISOString().split("T")[0]; // Trả về dạng chuỗi 'YYYY-MM-DD' hôm nay
+  }, []);
+
   const validate = (): string | null => {
-    if (!form.serviceId) return "Thiếu dịch vụ";
-    if (!form.customerName.trim()) return "Vui lòng nhập họ tên";
-    if (!form.phone.trim()) return "Vui lòng nhập số điện thoại";
-    if (!form.petName.trim()) return "Vui lòng nhập tên thú cưng";
-    if (!form.petType.trim()) return "Vui lòng nhập loại thú cưng";
-    if (!form.date) return "Vui lòng chọn ngày hẹn";
-    if (!form.time) return "Vui lòng chọn giờ hẹn";
+    if (!form.service) return "Thông tin dịch vụ trống.";
+    if (!form.customerName.trim()) return "Vui lòng nhập họ và tên người đặt lịch.";
+    if (!form.phone.trim()) return "Vui lòng nhập số điện thoại liên hệ.";
+    if (!form.petName.trim()) return "Vui lòng cung cấp tên của thú cưng.";
+    if (!form.petType.trim()) return "Vui lòng nhập chủng loại thú cưng (Ví dụ: Chó, Mèo...).";
+    if (!form.appointmentDate) return "Vui lòng chọn ngày hẹn thực hiện dịch vụ.";
+    if (!form.appointmentTime) return "Vui lòng cấu hình khung giờ hẹn.";
     return null;
   };
 
   const handleConfirm = () => {
-    const v = validate();
-    if (v) {
-      setError(v);
+    const errorMsg = validate();
+    if (errorMsg) {
+      setLocalError(errorMsg);
       return;
     }
-    setError(null);
+    setLocalError(null);
     setStep("confirm");
   };
 
+  // 4. Thực hiện gửi lịch thông qua Async Thunk điều phối Redux
   const handleSubmit = async () => {
-  const v = validate();
+    const errorMsg = validate();
+    if (errorMsg) {
+      setLocalError(errorMsg);
+      setStep("form");
+      return;
+    }
 
-  if (v) {
-    setError(v);
-    setStep("form");
-    return;
-  }
+    setLocalError(null);
 
-  try {
-    setError(null);
-
-    await appointmentService.createAppointment({
-      serviceId: form.serviceId,
+    // Triển khai dispatch action lên store mạng Backend
+    const resultAction = await dispatch(createAppointmentThunk({
+      service: form.service, // ĐÃ SỬA: Đổi tên trường thành 'service' khớp 100% với DTO Backend mới
       customerName: form.customerName,
       phone: form.phone,
       email: form.email || undefined,
       petName: form.petName,
       petType: form.petType,
-      date: form.date,
-      time: form.time,
-      notes: form.notes || undefined,
-    });
+      appointmentDate: form.appointmentDate,
+      appointmentTime: form.appointmentTime,
+      note: form.note || undefined,
+    }));
 
-    navigate("/my-appointments");
-  } catch (err: any) {
-    setError(
-      err.response?.data?.message ||
-      err.message ||
-      "Gửi lịch hẹn thất bại"
-    );
-  }
-};
-
-  const handleCancel = () => {
-    navigate("/services");
+    if (createAppointmentThunk.fulfilled.match(resultAction)) {
+      dispatch(clearBookingDraft()); // Đặt lịch thành công -> Xóa sạch bản nháp
+      navigate("/my-appointments"); // Chuyển hướng sang trang lịch sử đặt lịch
+    }
   };
 
-  if (error && !service && !loadingService) {
+  const displayError = localError || reduxError;
+
+  if (displayError && !service && !loadingService) {
     return (
       <>
         <Header />
         <main className="appointment">
           <div className="appointment__state appointment__state--error">
-            <p>{error}</p>
+            <p>{displayError}</p>
             <button className="appointment__back" onClick={() => navigate("/services")}>
-              Quay lại
+              Quay lại danh sách dịch vụ
             </button>
           </div>
         </main>
@@ -167,180 +170,172 @@ export const AppointmentFormPage: React.FC = () => {
         <div className="appointment__container">
           <div className="appointment__header">
             <h1 className="appointment__title">Đặt lịch dịch vụ</h1>
-            <p className="appointment__sub">Vui lòng điền thông tin để đặt lịch hẹn.</p>
+            <p className="appointment__sub">Vui lòng điền thông tin để đặt lịch hẹn chăm sóc thú cưng.</p>
           </div>
 
           {loadingService ? (
             <div className="appointment__state">
               <div className="appointment__spinner" />
-              <p>Đang tải thông tin dịch vụ...</p>
+              <p>Đang xử lý thông tin dịch vụ mẫu...</p>
             </div>
           ) : (
-            <>
-              <div className="appointment-booking">
-                <section className="appointment-booking__left">
-                  <div className="appointment__form-head">
-                    <span className={`appointment__step${step === "form" ? " appointment__step--active" : ""}`}>1</span>
-                    <span className="appointment__divider">/</span>
-                    <span className={`appointment__step${step === "confirm" ? " appointment__step--active" : ""}`}>2</span>
-                  </div>
+            <div className="appointment-booking">
+              <section className="appointment-booking__left">
+                <div className="appointment__form-head">
+                  <span className={`appointment__step${step === "form" ? " appointment__step--active" : ""}`}>1. Nhập thông tin</span>
+                  <span className="appointment__divider">|</span>
+                  <span className={`appointment__step${step === "confirm" ? " appointment__step--active" : ""}`}>2. Xác nhận</span>
+                </div>
 
-                  <div className="appointment__serviceLine">
-                    <span className="appointment__serviceLabel">Dịch vụ</span>
-                    <span className="appointment__serviceValue">{service?.name ?? ""}</span>
-                  </div>
+                <div className="appointment__serviceLine">
+                  <span className="appointment__serviceLabel">Dịch vụ đã chọn:</span>
+                  <span className="appointment__serviceValue">{service?.name ?? ""}</span>
+                </div>
 
-                  {step === "form" ? (
-                    <>
-                      <div className="appointment__row">
-                        <label className="appointment__label">Họ tên khách</label>
+                {step === "form" ? (
+                  <>
+                    <div className="appointment__row">
+                      <label className="appointment__label">Họ tên khách hàng *</label>
+                      <input
+                        className="appointment__input"
+                        value={form.customerName}
+                        onChange={(e) => handleInputChange("customerName", e.target.value)}
+                      />
+                    </div>
+
+                    <div className="appointment__row">
+                      <label className="appointment__label">Số điện thoại liên hệ *</label>
+                      <input
+                        className="appointment__input"
+                        value={form.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                      />
+                    </div>
+
+                    <div className="appointment__row">
+                      <label className="appointment__label">Địa chỉ Email (nếu có)</label>
+                      <input
+                        className="appointment__input"
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                      />
+                    </div>
+
+                    <div className="appointment__row">
+                      <label className="appointment__label">Tên thú cưng *</label>
+                      <input
+                        className="appointment__input"
+                        value={form.petName}
+                        onChange={(e) => handleInputChange("petName", e.target.value)}
+                      />
+                    </div>
+
+                    <div className="appointment__row">
+                      <label className="appointment__label">Loại thú cưng (Ví dụ: Chó, Mèo) *</label>
+                      <input
+                        className="appointment__input"
+                        value={form.petType}
+                        onChange={(e) => handleInputChange("petType", e.target.value)}
+                      />
+                    </div>
+
+                    <div className="appointment__row appointment__row--two">
+                      <div>
+                        <label className="appointment__label">Ngày hẹn *</label>
                         <input
                           className="appointment__input"
-                          value={form.customerName}
-                          onChange={(e) => setForm((p) => ({ ...p, customerName: e.target.value }))}
+                          type="date"
+                          min={minDateString} // ĐÃ THÊM: Khóa cứng, không cho người dùng chọn ngày quá khứ
+                          value={form.appointmentDate}
+                          onChange={(e) => handleInputChange("appointmentDate", e.target.value)}
                         />
                       </div>
+                      <div>
+                        <label className="appointment__label">Giờ hẹn *</label>
+                        <select
+                          className="appointment__input booking-time-select"
+                          value={form.appointmentTime}
+                          onChange={(e) => handleInputChange("appointmentTime", e.target.value)}
+                        >
+                          <option value="">Chọn giờ hẹn</option>
+                          {/* ĐÃ SỬA: Thu hẹp danh sách khung giờ trống chuẩn khung 08:00 - 17:00 của hệ thống */}
+                          <option value="08:00">08:00</option>
+                          <option value="08:30">08:30</option>
+                          <option value="09:00">09:00</option>
+                          <option value="09:30">09:30</option>
+                          <option value="10:00">10:00</option>
+                          <option value="10:30">10:30</option>
+                          <option value="11:00">11:00</option>
+                          <option value="11:30">11:30</option>
+                          <option value="13:00">13:00</option>
+                          <option value="13:30">13:30</option>
+                          <option value="14:00">14:00</option>
+                          <option value="14:30">14:30</option>
+                          <option value="15:00">15:00</option>
+                          <option value="15:30">15:30</option>
+                          <option value="16:00">16:00</option>
+                          <option value="16:30">16:30</option>
+                          <option value="17:00">17:00</option>
+                        </select>
+                      </div>
+                    </div>
 
-                      <div className="appointment__row">
-                        <label className="appointment__label">Số điện thoại</label>
-                        <input
-                          className="appointment__input"
-                          value={form.phone}
-                          onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                        />
+                    <div className="appointment__row">
+                      <label className="appointment__label">Ghi chú yêu cầu đặc biệt</label>
+                      <textarea
+                        className="appointment__textarea"
+                        value={form.note}
+                        onChange={(e) => handleInputChange("note", e.target.value)}
+                        placeholder="Nhập ghi chú sức khỏe hoặc yêu cầu cắt tỉa lông riêng biệt cho bé (nếu có)"
+                      />
+                    </div>
+
+                    {displayError && <p className="appointment__error">{displayError}</p>}
+
+                    <div className="appointment__actions">
+                      <button className="appointment__btn-primary" onClick={handleConfirm} disabled={loading}>
+                        Tiếp tục xác nhận
+                      </button>
+                      <button className="appointment__btn-secondary" onClick={() => navigate("/services")} disabled={loading}>
+                        Hủy bỏ
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="appointment__confirm">
+                      <h2 className="appointment__confirmTitle">Tóm tắt thông tin đặt lịch</h2>
+                      <div className="appointment__confirmGrid">
+                        <div className="appointment__kv"><span>Dịch vụ sử dụng</span><strong>{computedSummary?.serviceName ?? ""}</strong></div>
+                        <div className="appointment__kv"><span>Chi phí niêm yết</span><strong>{computedSummary?.servicePrice.toLocaleString("vi-VN") ?? ""}đ</strong></div>
+                        <div className="appointment__kv"><span>Thời gian thực hiện dự kiến</span><strong>{computedSummary?.serviceDuration ?? ""} phút</strong></div>
+                        <div className="appointment__kv"><span>Họ tên chủ nuôi</span><strong>{form.customerName}</strong></div>
+                        <div className="appointment__kv"><span>Số điện thoại</span><strong>{form.phone}</strong></div>
+                        <div className="appointment__kv"><span>Địa chỉ Email</span><strong>{form.email || "— Khách vãng lai —"}</strong></div>
+                        <div className="appointment__kv"><span>Tên bé cưng</span><strong>{form.petName}</strong></div>
+                        <div className="appointment__kv"><span>Chủng loại thú cưng</span><strong>{form.petType}</strong></div>
+                        <div className="appointment__kv"><span>Ngày hẹn đến</span><strong>{form.appointmentDate}</strong></div>
+                        <div className="appointment__kv"><span>Khung giờ bắt đầu</span><strong>{form.appointmentTime}</strong></div>
+                        <div className="appointment__kv"><span>Yêu cầu dặn dò</span><strong>{form.note || "— Không có —"}</strong></div>
+                        <div className="appointment__kv"><span>Trạng thái hồ sơ</span><strong>Chờ hệ thống xác nhận</strong></div>
                       </div>
 
-                      <div className="appointment__row">
-                        <label className="appointment__label">Email (nếu có)</label>
-                        <input
-                          className="appointment__input"
-                          type="email"
-                          value={form.email}
-                          onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                        />
-                      </div>
-
-                      <div className="appointment__row">
-                        <label className="appointment__label">Tên thú cưng</label>
-                        <input
-                          className="appointment__input"
-                          value={form.petName}
-                          onChange={(e) => setForm((p) => ({ ...p, petName: e.target.value }))}
-                        />
-                      </div>
-
-                      <div className="appointment__row">
-                        <label className="appointment__label">Loại thú cưng</label>
-                        <input
-                          className="appointment__input"
-                          value={form.petType}
-                          onChange={(e) => setForm((p) => ({ ...p, petType: e.target.value }))}
-                        />
-                      </div>
-
-                      <div className="appointment__row appointment__row--two">
-                        <div>
-                          <label className="appointment__label">Ngày hẹn</label>
-                          <input
-                            className="appointment__input"
-                            type="date"
-                            value={form.date}
-                            onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <label className="appointment__label">Giờ hẹn</label>
-                          <select
-                            className="appointment__input booking-time-select"
-                            value={form.time}
-                            onChange={(e) => setForm((p) => ({ ...p, time: e.target.value }))}
-                          >
-                            <option value="">Chọn giờ hẹn</option>
-                            <option value="08:00">08:00</option>
-                            <option value="08:30">08:30</option>
-                            <option value="09:00">09:00</option>
-                            <option value="09:30">09:30</option>
-                            <option value="10:00">10:00</option>
-                            <option value="10:30">10:30</option>
-                            <option value="11:00">11:00</option>
-                            <option value="11:30">11:30</option>
-                            <option value="13:00">13:00</option>
-                            <option value="13:30">13:30</option>
-                            <option value="14:00">14:00</option>
-                            <option value="14:30">14:30</option>
-                            <option value="15:00">15:00</option>
-                            <option value="15:30">15:30</option>
-                            <option value="16:00">16:00</option>
-                            <option value="16:30">16:30</option>
-                            <option value="17:00">17:00</option>
-                            <option value="17:30">17:30</option>
-                            <option value="18:00">18:00</option>
-                            <option value="18:30">18:30</option>
-                            <option value="19:00">19:00</option>
-                            <option value="19:30">19:30</option>
-                            <option value="20:00">20:00</option>
-                            <option value="20:30">20:30</option>
-                            <option value="21:00">21:00</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="appointment__row">
-                        <label className="appointment__label">Ghi chú</label>
-                        <textarea
-                          className="appointment__textarea"
-                          value={form.notes}
-                          onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                          placeholder="Nhập ghi chú (nếu có)"
-                        />
-                      </div>
-
-                      {error && <p className="appointment__error">{error}</p>}
+                      {displayError && <p className="appointment__error">{displayError}</p>}
 
                       <div className="appointment__actions">
-                        <button className="appointment__btn-primary" onClick={handleConfirm}>
-                          Xác nhận đặt lịch
+                        <button className="appointment__btn-primary" onClick={handleSubmit} disabled={loading}>
+                          {loading ? "Đang xử lý đặt chỗ..." : "Gửi thông tin đặt lịch"}
                         </button>
-                        <button className="appointment__btn-secondary" onClick={handleCancel}>
-                          Hủy
+                        <button className="appointment__btn-secondary" onClick={() => setStep("form")} disabled={loading}>
+                          Quay lại chỉnh sửa Form
                         </button>
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="appointment__confirm">
-                        <h2 className="appointment__confirmTitle">Tóm tắt thông tin</h2>
-                        <div className="appointment__confirmGrid">
-                          <div className="appointment__kv"><span>Dịch vụ</span><strong>{computedSummary?.serviceName ?? ""}</strong></div>
-                          <div className="appointment__kv"><span>Giá</span><strong>{computedSummary?.servicePrice.toLocaleString("vi-VN") ?? ""}đ</strong></div>
-                          <div className="appointment__kv"><span>Thời gian</span><strong>{computedSummary?.serviceDuration ?? ""} phút</strong></div>
-                          <div className="appointment__kv"><span>Họ tên khách</span><strong>{form.customerName}</strong></div>
-                          <div className="appointment__kv"><span>Số điện thoại</span><strong>{form.phone}</strong></div>
-                          <div className="appointment__kv"><span>Email</span><strong>{form.email || "—"}</strong></div>
-                          <div className="appointment__kv"><span>Tên thú cưng</span><strong>{form.petName}</strong></div>
-                          <div className="appointment__kv"><span>Loại thú cưng</span><strong>{form.petType}</strong></div>
-                          <div className="appointment__kv"><span>Ngày hẹn</span><strong>{form.date}</strong></div>
-                          <div className="appointment__kv"><span>Giờ hẹn</span><strong>{form.time}</strong></div>
-                          <div className="appointment__kv"><span>Ghi chú</span><strong>{form.notes || "—"}</strong></div>
-                          <div className="appointment__kv"><span>Trạng thái</span><strong>Chờ xác nhận</strong></div>
-                        </div>
-
-                        {error && <p className="appointment__error">{error}</p>}
-
-                        <div className="appointment__actions">
-                          <button className="appointment__btn-primary" onClick={handleSubmit}>
-                            Gửi lịch hẹn
-                          </button>
-                          <button className="appointment__btn-secondary" onClick={() => setStep("form")}>
-                            Hủy / chỉnh sửa
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </section>
-              </div>
-            </>
+                    </div>
+                  </>
+                )}
+              </section>
+            </div>
           )}
         </div>
       </main>
@@ -348,4 +343,3 @@ export const AppointmentFormPage: React.FC = () => {
     </>
   );
 };
-

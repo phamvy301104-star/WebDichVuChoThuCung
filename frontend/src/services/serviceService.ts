@@ -2,37 +2,54 @@ import api from './api';
 import type { ApiResponse } from '@/types';
 import type { Service } from '@/types/service';
 
+/**
+ * ĐÃ THÊM: Chuẩn hóa dữ liệu Dịch vụ đồng nhất hệ thống id
+ */
+const normalizeService = (s: any): Service => ({
+  id: s._id ?? s.id,
+  name: s.name,
+  description: s.description,
+  category: s.category,
+  price: s.price,
+  duration: s.duration,
+  image: s.image,
+  status: s.status,
+  rating: s.rating,
+  reviews: s.reviews,
+  createdAt: s.createdAt,
+  updatedAt: s.updatedAt,
+});
+
 export const serviceService = {
   // Lấy danh sách dịch vụ
-  async getServices() {
-    // Backend trả về toàn bộ services.
-    // UI user sẽ tự lọc theo status (chỉ ẩn INACTIVE).
+  async getServices(): Promise<Service[]> {
     const response = await api.get<ApiResponse<Service[]>>('/services');
-    return response.data.data || [];
+    const list = response.data.data || [];
+    return list.map(normalizeService); // ĐÃ SỬA: Đồng bộ map dữ liệu sạch
   },
 
   // Lấy chi tiết dịch vụ
-  async getServiceById(id: string) {
+  async getServiceById(id: string): Promise<Service> {
     const response = await api.get<ApiResponse<Service>>(`/services/${id}`);
-    return response.data.data;
+    if (!response.data.data) throw new Error('Không tìm thấy thông tin dịch vụ.');
+    return normalizeService(response.data.data);
   },
 
   // Tạo dịch vụ (Admin)
-  async createService(data: Partial<Service>) {
+  async createService(data: Partial<Service>): Promise<Service> {
     const response = await api.post<ApiResponse<Service>>('/services', data);
-    return response.data?.data || response.data;
+    return normalizeService(response.data.data);
   },
 
   // Cập nhật dịch vụ (Admin)
-  async updateService(id: string, data: Partial<Service>) {
+  async updateService(id: string, data: Partial<Service>): Promise<Service> {
     const response = await api.patch<ApiResponse<Service>>(`/services/${id}`, data);
-    return response.data?.data || response.data;
+    return normalizeService(response.data.data);
   },
  
-  // Xóa dịch vụ (Admin) - không dùng ở màn admin hiện tại (soft delete bằng updateService) hay ẩn dịch vụ (status = INACTIVE)
-  async deleteService(id: string) {
-    const response = await api.delete(`/services/${id}`);
-    return response.data?.data || response.data;
+  // Xóa dịch vụ (Admin)
+  async deleteService(id: string): Promise<Service> {
+    const response = await api.delete<ApiResponse<Service>>(`/services/${id}`);
+    return normalizeService(response.data.data);
   },
 };
-

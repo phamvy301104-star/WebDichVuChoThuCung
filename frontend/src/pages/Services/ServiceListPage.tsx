@@ -1,45 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { Header } from "@components/Common/Header";
-import { Footer } from "@components/Common/Footer";
-import { serviceService } from "@services/serviceService";
-import { RootState } from "@stores/store";
-import type { Service } from "@/types";
+import { Header } from "@/components/Common/Header";
+import { Footer } from "@/components/Common/Footer";
+import { serviceService } from "@/services/serviceService";
+import type { Service } from "@/types/service";
 
+// ĐÃ SỬA: Đồng bộ hóa key danh mục chuẩn khớp khít dữ liệu Seeder Backend ('Spa', 'Y tế')
 const CATEGORIES = [
-  { key: "all", label: "Tất cả", icon: "🐾" },
-  { key: "spa", label: "Spa & Grooming", icon: "✂️" },
-  { key: "bath", label: "Tắm & Vệ sinh", icon: "🛁" },
-  { key: "medical", label: "Khám & Điều trị", icon: "🩺" },
-  { key: "hotel", label: "Lưu trú", icon: "🏨" },
-  { key: "transport", label: "Vận chuyển", icon: "🚗" },
-  { key: "training", label: "Huấn luyện", icon: "🎓" },
+  { key: "all", label: "Tất cả dịch vụ", icon: "🐾" },
+  { key: "Spa", label: "Spa & Grooming", icon: "✂️" },
+  { key: "Y tế", label: "Khám bệnh & Y tế", icon: "🩺" },
 ];
 
-const getCategoryKey = (name: string): string => {
-  const n = name.toLowerCase();
-  if (n.includes("spa") || n.includes("grooming") || n.includes("cắt lông")) return "spa";
-  if (n.includes("tắm") || n.includes("vệ sinh")) return "bath";
-  if (n.includes("khám") || n.includes("tiêm") || n.includes("điều trị") || n.includes("bệnh")) return "medical";
-  if (n.includes("lưu trú") || n.includes("khách sạn")) return "hotel";
-  if (n.includes("vận chuyển")) return "transport";
-  if (n.includes("huấn luyện") || n.includes("training")) return "training";
-  return "spa";
-};
-
-const getCategoryLabel = (key: string) =>
-  CATEGORIES.find((c) => c.key === key)?.label ?? "Dịch vụ";
-
+// Bản đồ map icon động theo ký tự tên để tăng tính thẩm mỹ UI hiển thị
 const getServiceIcon = (name: string): string => {
   const n = name.toLowerCase();
-  if (n.includes("tắm")) return "🛁";
+  if (n.includes("tắm") || n.includes("vệ sinh")) return "🛁";
   if (n.includes("cắt") || n.includes("grooming") || n.includes("spa")) return "✂️";
   if (n.includes("khám") || n.includes("bệnh")) return "🩺";
-  if (n.includes("tiêm")) return "💉";
-  if (n.includes("lưu trú") || n.includes("khách sạn")) return "🏨";
-  if (n.includes("vận chuyển")) return "🚗";
-  if (n.includes("huấn luyện")) return "🎓";
+  if (n.includes("tiêm") || n.includes("vaccine")) return "💉";
   return "🐾";
 };
 
@@ -47,69 +26,65 @@ const PAGE_SIZE = 6;
 type SortKey = "popular" | "price_asc" | "price_desc" | "duration";
 
 export const ServiceListPage: React.FC = () => {
+  const navigate = useNavigate();
+
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [sort, setSort] = useState<SortKey>("popular");
   const [page, setPage] = useState(1);
 
-  const navigate = useNavigate();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-
   useEffect(() => {
     serviceService
       .getServices()
       .then(setServices)
-      .catch((err: any) =>
-        setError(err.response?.data?.message || err.message || "Lỗi khi tải dịch vụ")
-      )
+      .catch((err: any) => setError(err.message || "Lỗi tải danh sách dịch vụ hệ thống."))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { setPage(1); }, [search, activeCategory, sort]);
+  useEffect(() => { 
+    setPage(1); 
+  }, [search, activeCategory, sort]);
 
+  // Bộ lọc Client mượt mà xử lý phân loại dữ liệu ẩn
   const filtered = useMemo(() => {
-    // Logic yêu cầu: chỉ ẩn service status INACTIVE.
-    // Admin xem toàn bộ, user chỉ không thấy INACTIVE (không ẩn nhầm các service còn lại).
-    let list = [...services].filter((s) => (s as any)?.status !== 'INACTIVE');
+    let list = [...services].filter((s) => s.status !== 'INACTIVE');
 
-    if (activeCategory !== "all")
-      list = list.filter((s) => getCategoryKey(s.name) === activeCategory);
+    // ĐÃ SỬA: Lọc trực tiếp bằng thuộc tính s.category chuẩn của thực thể DB
+    if (activeCategory !== "all") {
+      list = list.filter((s) => s.category === activeCategory);
+    }
 
-    if (search.trim())
-      list = list.filter(
-        (s) =>
-          s.name.toLowerCase().includes(search.toLowerCase()) ||
-          s.description.toLowerCase().includes(search.toLowerCase())
+    if (search.trim()) {
+      const kw = search.toLowerCase();
+      list = list.filter((s) =>
+        s.name.toLowerCase().includes(kw) || s.description.toLowerCase().includes(kw)
       );
+    }
+
     if (sort === "price_asc") list.sort((a, b) => a.price - b.price);
     else if (sort === "price_desc") list.sort((a, b) => b.price - a.price);
     else if (sort === "duration") list.sort((a, b) => a.duration - b.duration);
     else list.sort((a, b) => b.rating - a.rating);
+
     return list;
   }, [services, activeCategory, search, sort]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleBook = (serviceId: string) => {
-    if (!isAuthenticated) {
-      navigate(`/auth/login?redirect=/services&serviceId=${serviceId}`);
-      return;
-    }
-    navigate(`/appointments?serviceId=${serviceId}`);
-  };
-
-  const scrollToList = () =>
+  const scrollToList = () => {
     document.getElementById("services-list")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <>
       <Header />
 
-      {/* HERO */}
+      {/* HERO BANNER SECTION */}
       <section className="services-hero">
         <div className="services-wrap">
           <div className="services-hero__content">
@@ -123,39 +98,22 @@ export const ServiceListPage: React.FC = () => {
               <br />ấm áp và chuyên nghiệp
             </h1>
             <p className="services-hero__desc">
-              Đội ngũ bác sĩ thú y và groomer giàu kinh nghiệm, tận tâm mang lại
-              trải nghiệm tốt nhất cho người bạn lông xù của bạn.
+              Đội ngũ bác sĩ thú y và groomer giàu kinh nghiệm, tận tâm mang lại trải nghiệm tốt nhất cho người bạn lông xù của bạn.
             </p>
             <div className="services-hero__cta">
-              <button
-                className="services-hero__btn-primary"
-                onClick={() => {
-                  // yêu cầu: nếu chưa chọn dịch vụ thì không tạo "đặt lịch ngay", chỉ scroll xuống danh sách
-                  scrollToList();
-                }}
-              >
+              <button className="services-hero__btn-primary" onClick={scrollToList}>
                 Đặt lịch ngay
               </button>
-              <button
-                className="services-hero__btn-outline"
-                onClick={() => navigate("/my-appointments")}
-              >
+              <button className="services-hero__btn-outline" onClick={() => navigate("/my-appointments")}>
                 Lịch hẹn của tôi
               </button>
-
             </div>
             <div className="services-hero__stats">
-              <div className="services-hero__stat">
-                <strong>500+</strong><span>Khách hàng</span>
-              </div>
+              <div className="services-hero__stat"><strong>500+</strong><span>Khách hàng</span></div>
               <div className="services-hero__stat-div" />
-              <div className="services-hero__stat">
-                <strong>4.9★</strong><span>Đánh giá</span>
-              </div>
+              <div className="services-hero__stat"><strong>4.9★</strong><span>Đánh giá</span></div>
               <div className="services-hero__stat-div" />
-              <div className="services-hero__stat">
-                <strong>10+</strong><span>Chuyên gia</span>
-              </div>
+              <div className="services-hero__stat"><strong>10+</strong><span>Chuyên gia</span></div>
             </div>
           </div>
           <div className="services-hero__visual">
@@ -167,11 +125,11 @@ export const ServiceListPage: React.FC = () => {
         </div>
       </section>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN LIST BODY SECTION */}
       <div className="services-page-body" id="services-list">
         <div className="services-wrap">
 
-          {/* Search + Sort bar */}
+          {/* Tìm kiếm và Sắp xếp */}
           <div className="services-toolbar">
             <div className="services-search-wrap">
               <span className="services-search-ico">🔍</span>
@@ -194,7 +152,7 @@ export const ServiceListPage: React.FC = () => {
             </select>
           </div>
 
-          {/* Category pills */}
+          {/* Thẻ Pills phân loại danh mục */}
           <div className="services-pills">
             {CATEGORIES.map((cat) => (
               <button
@@ -207,21 +165,19 @@ export const ServiceListPage: React.FC = () => {
             ))}
           </div>
 
-          {/* List header */}
           <div className="services-list-head">
             <h2 className="services-list-title">
-              {activeCategory === "all" ? "Tất cả dịch vụ" : getCategoryLabel(activeCategory)}
+              {activeCategory === "all" ? "Tất cả dịch vụ" : CATEGORIES.find(c => c.key === activeCategory)?.label}
             </h2>
             <span className="services-list-count">
               {loading ? "Đang tải..." : `${filtered.length} dịch vụ`}
             </span>
           </div>
 
-          {/* States */}
           {loading ? (
             <div className="services-state">
               <div className="services-spinner" />
-              <p>Đang tải dịch vụ...</p>
+              <p>Đang đồng bộ danh sách dịch vụ...</p>
             </div>
           ) : error ? (
             <div className="services-state services-state--error">
@@ -236,8 +192,6 @@ export const ServiceListPage: React.FC = () => {
               <div className="services-grid">
                 {paginated.map((service) => {
                   const id = service.id || "";
-                  const catKey = getCategoryKey(service.name);
-                  const catLabel = getCategoryLabel(catKey);
                   return (
                     <div key={id} className="services-card">
                       <div className="services-card__media">
@@ -248,7 +202,7 @@ export const ServiceListPage: React.FC = () => {
                             <span className="services-card__icon">{getServiceIcon(service.name)}</span>
                           </div>
                         )}
-                        <span className="services-card__badge">{catLabel}</span>
+                        <span className="services-card__badge">{service.category}</span>
                       </div>
                       <div className="services-card__body">
                         <h3 className="services-card__name">{service.name}</h3>
@@ -261,30 +215,17 @@ export const ServiceListPage: React.FC = () => {
                           {service.price.toLocaleString("vi-VN")}<span>đ</span>
                         </div>
                       </div>
-                      <div className="services-card__footer" id="service-list">
+                      {/* ĐÃ SỬA: Loại bỏ thuộc tính id="service-list" trùng lặp vi phạm W3C */}
+                      <div className="services-card__footer">
                         <button
                           className="services-card__btn-detail"
-                          onClick={() => {
-                            const serviceId = (service as any)?._id || (service as any)?.id;
-                            if (!serviceId) {
-                              console.error("Không tìm thấy serviceId:", service);
-                              return;
-                            }
-                            navigate(`/services/${serviceId}`);
-                          }}
+                          onClick={() => navigate(`/services/${id}`)} // ĐÃ SỬA: Dùng trực tiếp thuộc tính id chuẩn hóa sạch
                         >
                           Xem chi tiết
                         </button>
                         <button
                           className="services-card__btn-book"
-                          onClick={() => {
-                            const serviceId = (service as any)?._id || (service as any)?.id;
-                            if (!serviceId) {
-                              console.error("Không tìm thấy serviceId:", service);
-                              return;
-                            }
-                            navigate(`/booking/${serviceId}`);
-                          }}
+                          onClick={() => navigate(`/booking/${id}`)} // ĐÃ SỬA: Cho phép tất cả đi qua Form đặt chỗ vãng lai
                         >
                           Đặt lịch
                         </button>
@@ -294,7 +235,7 @@ export const ServiceListPage: React.FC = () => {
                 })}
               </div>
 
-              {/* Pagination */}
+              {/* Phân trang */}
               <div className="services-pagination">
                 <p className="services-pagination__info">
                   Hiển thị {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} trong {filtered.length} dịch vụ

@@ -6,7 +6,7 @@ export interface User {
   phone?: string;
   address?: string;
   avatar?: string;
-  role: "user" | "admin" | "staff";
+  role: 'user' | 'admin' | 'staff';
   createdAt: string;
 }
 
@@ -56,67 +56,25 @@ export interface Brand {
 }
 
 
-export interface Service {
-  id?: string;
-  _id?: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: number;
-  image?: string;
-  rating: number;
-  reviews: number;
-  createdAt: string;
-}
-
-export interface BookingRequest {
-  serviceId: string;
-  date: string;
-  time: string;
-  petId?: string;
-  notes?: string;
-}
-
-export interface Booking {
-  id: string;
-  user: User;
-  service: Service;
-  date: string;
-  time: string;
-  status: "pending" | "confirmed" | "completed" | "cancelled";
-  createdAt: string;
-}
+// export interface BookingRequest {
+//   serviceId: string;
+//   date: string;
+//   time: string;
+//   petId?: string;
+//   notes?: string;
+// }
 
 // ==================== Pet Types ====================
 export interface Pet {
-  id?: string;
-  _id?: string;
+  id: string;
   name: string;
   species: string;
   breed: string;
   age: number;
   image: string;
   description?: string;
-  price?: number;
   owner: User;
-  status: "owned" | "for_sale" | "for_adoption";
-  createdAt: string;
-}
-
-export interface AdoptionRequest {
-  id: string;
-  petId: string;
-  petName: string;
-  petBreed: string;
-  petImage: string;
-  petPrice?: number;
-  requesterName: string;
-  requesterEmail: string;
-  requesterPhone: string;
-  reason?: string;
-  appointmentDate?: string;
-  appointmentTime?: string;
-  status: "pending" | "approved" | "rejected";
+  status: 'owned' | 'for_sale' | 'for_adoption';
   createdAt: string;
 }
 
@@ -139,7 +97,7 @@ export interface Order {
   user: User;
   items: CartItem[];
   totalPrice: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   shippingAddress: string;
   paymentMethod: string;
   createdAt: string;
@@ -151,7 +109,7 @@ export interface Review {
   id: string;
   user: User;
   product?: Product;
-  service?: Service;
+  // service?: Service;
   rating: number;
   comment: string;
   createdAt: string;
@@ -174,3 +132,7 @@ export interface PaginatedResponse<T> {
     pages: number;
   };
 }
+
+export * from './service';
+export * from './booking';
+export * from './staff';

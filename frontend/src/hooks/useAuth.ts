@@ -17,6 +17,7 @@ export const useAuth = () => {
       const response = await authService.login({ email, password });
       const userData = response.data.user;
       const userToken = response.data.token;
+      localStorage.setItem(TOKEN_KEY, userToken);
       localStorage.setItem(USER_KEY, JSON.stringify(userData));
       dispatch(loginSuccess({ user: userData, token: userToken }));
       return userData;
@@ -33,6 +34,7 @@ export const useAuth = () => {
       const response = await authService.register({ email, password, name });
       const userData = response.data.user;
       const userToken = response.data.token;
+      localStorage.setItem(TOKEN_KEY, userToken);
       localStorage.setItem(USER_KEY, JSON.stringify(userData));
       dispatch(loginSuccess({ user: userData, token: userToken }));
       return userData;
@@ -49,7 +51,8 @@ export const useAuth = () => {
     } catch {
       // ignore logout errors
     }
-
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     dispatch(logout());
   };
 

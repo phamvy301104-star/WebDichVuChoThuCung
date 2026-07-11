@@ -1,327 +1,135 @@
-import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { 
-  fetchAppointmentsThunk, 
-  assignStaffThunk 
-} from '@/stores/slices/appointmentSlice';
-import { appointmentService } from '@/services/appointmentService';
-import { staffService } from '@/services/staffService';
-import type { RootState, AppDispatch } from '@/stores/store';
-import type { Booking, BookingStatus } from '@/types/booking';
-import type { Staff } from '@/types/staff';
+import { RootState } from '@stores/store';
+import { updateAppointmentStatus, deleteAppointment, bookAppointment, Appointment } from '@stores/slices/bookingSlice';
 
-interface AppointmentRow {
-  id: string;
-  customer: string;
-  phone: string;
-  pet: string;
-  serviceId: string;
-  serviceName: string;
-  staffId: string;
-  staffName: string;
-  rawDate: string; 
-  datetime: string;
-  status: BookingStatus;
-}
-
-const STATUS_LABELS: Record<BookingStatus, string> = {
-  pending: 'Chờ xác nhận',
-  confirmed: 'Đã xác nhận',
-  assigned: 'Đã xếp nhân viên',
-  in_progress: 'Đang thực hiện',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã hủy',
+const STATUS_MAP: Record<Appointment['status'], { label: string; color: string; bg: string }> = {
+  pending:   { label: 'Chờ xác nhận', color: '#92400e', bg: '#fef3c7' },
+  confirmed: { label: 'Đã xác nhận',  color: '#1e40af', bg: '#dbeafe' },
+  completed: { label: 'Hoàn thành',   color: '#166534', bg: '#dcfce7' },
+  cancelled: { label: 'Đã hủy',       color: '#991b1b', bg: '#fee2e2' },
 };
+const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
 
-const formatCleanDate = (dateStr: string) => {
-  if (!dateStr || !dateStr.includes('-')) return dateStr;
-  const [year, month, day] = dateStr.split('-');
-  return `${day}/${month}/${year}`;
-};
+const EMPTY_FORM = { customerName:'', customerEmail:'', customerPhone:'', petName:'', petType:'Chó', serviceId:'', serviceName:'', staffId:'', staffName:'', date:'', time:'', note:'' };
 
 export const AdminAppointments: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { appointments, loading, error: reduxError } = useSelector((state: RootState) => state.appointment);
+  const dispatch = useDispatch();
+  const { appointments, services, staff } = useSelector((s: RootState) => s.booking);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [selected, setSelected] = useState<Appointment | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [delId, setDelId] = useState<string | null>(null);
 
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const filtered = appointments.filter(a => !filterStatus || a.status === filterStatus);
+  const badge = (s: Appointment['status']) => { const m = STATUS_MAP[s]; return <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 600, color: m.color, background: m.bg }}>{m.label}</span>; };
+  const next: Partial<Record<Appointment['status'], Appointment['status']>> = { pending: 'confirmed', confirmed: 'completed' };
 
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'' | BookingStatus>('');
-  const [dateFilter, setDateFilter] = useState<string>('');
-
-  const refresh = () => {
-    setLocalError(null);
-    dispatch(fetchAppointmentsThunk());
-    staffService.getAll({ status: 'active' })
-      .then((data) => setStaffList(data))
-      .catch((err) => console.error('Lỗi tải danh sách nhân viên:', err));
+  const handleAdd = () => {
+    if (!form.customerName || !form.date || !form.serviceId) return alert('Vui lòng điền tên, dịch vụ và ngày hẹn.');
+    const svc = services.find(s => s.id === form.serviceId);
+    const st  = staff.find(s => s.id === form.staffId);
+    dispatch(bookAppointment({ ...form, serviceName: svc?.name || '', staffName: st?.name || '', status: 'pending' }));
+    setShowAdd(false); setForm({ ...EMPTY_FORM });
   };
-
-  useEffect(() => {
-    refresh();
-  }, [dispatch]);
-
-  const rows: AppointmentRow[] = useMemo(() => {
-    return appointments.map((b: Booking) => {
-      const id = b.id ?? b._id;
-      const petInfo = `${b.petName ?? ''}${b.petType ? ` (${b.petType})` : ''}`.trim();
-      const cleanDate = formatCleanDate(b.appointmentDate);
-      const datetime = `${cleanDate} (${b.appointmentTime} - ${b.endTime ?? ''})`.trim();
-
-      return {
-        id: String(id),
-        customer: b.customerName ?? '',
-        phone: b.phone ?? '',
-        pet: petInfo,
-        serviceId: b.service?.id ?? '',
-        serviceName: b.service?.name ?? 'Dịch vụ ẩn',
-        staffId: b.staff?.id ?? '',
-        staffName: b.staff?.name ?? 'Chưa phân công',
-        rawDate: b.appointmentDate, 
-        datetime,
-        status: b.status,
-      };
-    });
-  }, [appointments]);
-
-  const filtered = useMemo(() => {
-    return rows.filter((a) => {
-      const kw = search.toLowerCase();
-      const matchSearch =
-        a.customer.toLowerCase().includes(kw) ||
-        a.phone.includes(kw) ||
-        a.pet.toLowerCase().includes(kw) ||
-        a.serviceName.toLowerCase().includes(kw) ||
-        a.staffName.toLowerCase().includes(kw);
-      
-      const matchStatus = statusFilter ? a.status === statusFilter : true;
-      const matchDate = dateFilter ? a.rawDate === dateFilter : true;
-
-      return matchSearch && matchStatus && matchDate;
-    });
-  }, [rows, search, statusFilter, dateFilter]);
-
-  const stats = useMemo(() => {
-    return {
-      total: appointments.length,
-      pending: appointments.filter((x) => x.status === 'pending').length,
-      confirmed: appointments.filter((x) => ['confirmed', 'assigned', 'in_progress'].includes(x.status)).length,
-      completed: appointments.filter((x) => x.status === 'completed').length,
-      cancelled: appointments.filter((x) => x.status === 'cancelled').length,
-    };
-  }, [appointments]);
-
-  const handleUpdateStatus = async (id: string, nextStatus: BookingStatus) => {
-    try {
-      setLocalError(null);
-      await appointmentService.updateAppointmentStatus(id, nextStatus);
-      dispatch(fetchAppointmentsThunk());
-    } catch (e: any) {
-      setLocalError(e.message || 'Cập nhật tiến trình lịch hẹn thất bại.');
-    }
-  };
-
-  const handleAssignStaff = async (bookingId: string, staffId: string) => {
-    if (!staffId) return;
-    try {
-      setLocalError(null);
-      const resultAction = await dispatch(assignStaffThunk({ id: bookingId, staffId }));
-      if (assignStaffThunk.rejected.match(resultAction)) {
-        alert(resultAction.payload as string);
-      } else {
-        alert('Phân công chuyên viên phụ trách lịch hẹn thành công!');
-      }
-    } catch (e: any) {
-      setLocalError(e.message || 'Phân công nhân viên lỗi.');
-    }
-  };
-
-  const displayError = localError || reduxError;
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
-        <div>
-          <h1 className="admin-page-title">Quản lý điều phối lịch hẹn</h1>
-          <p className="admin-page-sub">Xem danh sách hồ sơ, duyệt ca và phân phối nhân viên xử lý công việc cửa hàng.</p>
-        </div>
-        <button className="ap-btn ap-btn-secondary" onClick={refresh} disabled={loading}>
-          🔄 Tải lại dữ liệu
-        </button>
+        <div><h1 className="admin-page-title">📅 Quản lý lịch hẹn</h1><p className="admin-page-sub">Tổng {appointments.length} lịch · {appointments.filter(a => a.status === 'pending').length} chờ xác nhận</p></div>
+        <button className="ap-btn ap-btn-primary" onClick={() => setShowAdd(true)}>+ Tạo lịch hẹn</button>
       </div>
-
-      <div className="ap-stats-grid ap-stats-grid--appointments">
-        <div className="ap-stat ap-stat--total">
-          <span className="ap-stat-icon">📅</span>
-          <div className="ap-stat-body">
-            <div className="ap-stat-value">{stats.total}</div>
-            <div className="ap-stat-label">Tổng đơn đặt lịch</div>
-          </div>
-        </div>
-        <div className="ap-stat ap-stat--pending">
-          <span className="ap-stat-icon">⏳</span>
-          <div className="ap-stat-body">
-            <div className="ap-stat-value">{stats.pending}</div>
-            <div className="ap-stat-label">Chờ duyệt ca</div>
-          </div>
-        </div>
-        <div className="ap-stat ap-stat--confirmed">
-          <span className="ap-stat-icon">⚡</span>
-          <div className="ap-stat-body">
-            <div className="ap-stat-value">{stats.confirmed}</div>
-            <div className="ap-stat-label">Đang vận hành</div>
-          </div>
-        </div>
-        <div className="ap-stat ap-stat--completed">
-          <span className="ap-stat-icon">🏁</span>
-          <div className="ap-stat-body">
-            <div className="ap-stat-value">{stats.completed}</div>
-            <div className="ap-stat-label">Đã hoàn thành</div>
-          </div>
-        </div>
-        <div className="ap-stat ap-stat--cancelled">
-          <span className="ap-stat-icon">🚫</span>
-          <div className="ap-stat-body">
-            <div className="ap-stat-value">{stats.cancelled}</div>
-            <div className="ap-stat-label">Đã hủy bỏ</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="ap-card ap-card--appointments">
-        <div className="ap-card-header ap-card-header--appointments">
-          <span>Hồ sơ danh sách hiển thị thực tế ({filtered.length})</span>
-        </div>
-
-        <div className="ap-filters ap-filters--appointments">
-          <input
-            className="ap-search"
-            placeholder="Tìm nhanh tên khách / SĐT / tên pet / tên nhân viên..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          <select
-            className="ap-select"
-            aria-label="Lọc theo trạng thái hồ sơ lịch đặt"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-          >
-            <option value="">Tất cả trạng thái xử lý</option>
-            <option value="pending">Chờ xác nhận</option>
-            <option value="confirmed">Đã xác nhận</option>
-            <option value="assigned">Đã gán nhân viên</option>
-            <option value="in_progress">Đang thực hiện</option>
-            <option value="completed">Hoàn thành</option>
-            <option value="cancelled">Đã hủy</option>
+      <div className="ap-card">
+        <div className="ap-filters">
+          <select className="ap-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="">Tất cả trạng thái</option>
+            {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
-
-          <input
-            className="ap-search"
-            type="date"
-            aria-label="Lọc danh sách theo ngày hẹn đến"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-          />
         </div>
-
-        {displayError && <div className="appointment__error ap-error-box">{displayError}</div>}
-
-        {loading ? (
-          <div className="ap-empty">⏳ Đang đồng bộ hóa kho dữ liệu đặt lịch...</div>
-        ) : filtered.length === 0 ? (
-          <div className="ap-empty">📭 Không tìm thấy lịch đặt chỗ nào khớp điều kiện tìm kiếm.</div>
-        ) : (
-          <div className="ap-appointments-list">
-            {filtered.map((a) => (
-              <div key={a.id} className="ap-appointment-card">
-                <div className="ap-appointment-card__grid">
-                  
-                  <div className="ap-appointment-card__customer">
-                    <div className="ap-appointment-card__customerName">👤 {a.customer}</div>
-                    <div className="ap-appointment-card__customerPhone">📞 SĐT: {a.phone}</div>
+        <table className="admin-table">
+          <thead><tr><th>Mã</th><th>Khách hàng</th><th>Thú cưng</th><th>Dịch vụ</th><th>Nhân viên</th><th>Ngày & Giờ</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+          <tbody>
+            {filtered.map(a => (
+              <tr key={a.id}>
+                <td><b>{a.id}</b></td>
+                <td><div style={{fontWeight:600}}>{a.customerName}</div><div style={{fontSize:'0.78rem',color:'#6b7280'}}>{a.customerPhone}</div></td>
+                <td>{a.petName} <span style={{color:'#9ca3af',fontSize:'0.78rem'}}>({a.petType})</span></td>
+                <td><span className="ap-tag">{a.serviceName}</span></td>
+                <td>{a.staffName}</td>
+                <td><b>{a.date}</b> <span style={{color:'#6b7280'}}>{a.time}</span></td>
+                <td>{badge(a.status)}</td>
+                <td>
+                  <div className="ap-actions">
+                    <button className="ap-action-btn" onClick={() => setSelected(a)}>👁️</button>
+                    {next[a.status] && <button className="ap-action-btn" style={{background:'#dcfce7',color:'#166534'}} onClick={() => dispatch(updateAppointmentStatus({ id: a.id, status: next[a.status]! }))}>{next[a.status] === 'confirmed' ? '✅' : '🏁'}</button>}
+                    {a.status === 'pending' && <button className="ap-action-btn ap-action-del" onClick={() => dispatch(updateAppointmentStatus({ id: a.id, status: 'cancelled' }))}>❌</button>}
+                    <button className="ap-action-btn ap-action-del" onClick={() => setDelId(a.id)}>🗑️</button>
                   </div>
-
-                  <div className="ap-appointment-card__service">
-                    <div className="ap-appointment-card__pet">🐾 Bé: <b>{a.pet}</b></div>
-                    <div className="ap-appointment-card__serviceName">🛠️ {a.serviceName}</div>
-                  </div>
-
-                  <div className="ap-appointment-card__status">
-                    {/* ĐÃ SỬA CHUẨN: Bọc ngoặc nhọn thực thi hàm hiển thị nhãn dịch */}
-                    <span className={`ap-status-pill ap-status-pill--${a.status}`}>
-                      {STATUS_LABELS[a.status]}
-                    </span>
-                    
-                    <div className="ap-appointment-card__staffSelectZone ap-margin-top-8">
-                      {['pending', 'confirmed', 'assigned'].includes(a.status) ? (
-                        <select
-                          className="ap-select ap-select-staff-inline"
-                          aria-label="Chỉ định chuyên viên kỹ thuật nhận ca làm việc"
-                          value={a.staffId}
-                          onChange={(e) => handleAssignStaff(a.id, e.target.value)}
-                        >
-                          <option value="">-- Chỉ định chuyên viên --</option>
-                          {staffList.map((st) => (
-                            <option key={st.id} value={st.id}>
-                              {st.name} ({st.position})
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="ap-appointment-card__staff">🧑‍⚕️ Phụ trách: <b>{a.staffName}</b></div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="ap-appointment-card__meta">
-                    <div className="ap-appointment-card__datetime">⏰ {a.datetime}</div>
-
-                    <div className="ap-appointment-card__actions ap-margin-top-8">
-                      {a.status === 'pending' && (
-                        <>
-                          <button className="ap-btn ap-btn-primary ap-btn-primary-inline" onClick={() => handleUpdateStatus(a.id, 'confirmed')}>
-                            Duyệt lịch
-                          </button>
-                          <button className="ap-btn ap-btn-secondary ap-btn-danger-inline" onClick={() => handleUpdateStatus(a.id, 'cancelled')}>
-                            Từ chối
-                          </button>
-                        </>
-                      )}
-
-                      {a.status === 'confirmed' && (
-                        <span className="ap-appointment-card__noActions ap-text-waiting">⚠️ Chờ xếp nhân viên</span>
-                      )}
-
-                      {a.status === 'assigned' && (
-                        <button className="ap-btn ap-btn-primary ap-btn-progress-inline" onClick={() => handleUpdateStatus(a.id, 'in_progress')}>
-                          Bắt đầu làm
-                        </button>
-                      )}
-
-                      {a.status === 'in_progress' && (
-                        <button className="ap-btn ap-btn-primary ap-btn-complete-inline" onClick={() => handleUpdateStatus(a.id, 'completed')}>
-                          Hoàn thành đơn
-                        </button>
-                      )}
-
-                      {a.status === 'completed' && (
-                        <span className="ap-appointment-card__noActions ap-text-completed">🏁 Ca làm việc kết thúc</span>
-                      )}
-
-                      {a.status === 'cancelled' && (
-                        <span className="ap-appointment-card__noActions ap-text-cancelled">❌ Lịch đã hủy bỏ</span>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-              </div>
+                </td>
+              </tr>
             ))}
-          </div>
-        )}
+          </tbody>
+        </table>
+        {filtered.length === 0 && <div className="ap-empty">Không có lịch hẹn nào</div>}
       </div>
+
+      {delId && (<div style={overlay}><div style={{background:'#fff',borderRadius:16,padding:24,width:400,boxShadow:'0 20px 60px rgba(0,0,0,.2)'}}><h3 style={{marginBottom:12}}>⚠️ Xóa lịch hẹn?</h3><p style={{color:'#6b7280',marginBottom:20}}>Hành động này không thể hoàn tác.</p><div style={{display:'flex',gap:10,justifyContent:'flex-end'}}><button className="ap-btn ap-btn-ghost" onClick={() => setDelId(null)}>Hủy</button><button className="ap-btn" style={{background:'#ef4444',color:'#fff'}} onClick={() => { dispatch(deleteAppointment(delId)); setDelId(null); }}>Xóa</button></div></div></div>)}
+
+      {selected && (
+        <div style={overlay} onClick={e => { if (e.target === e.currentTarget) setSelected(null); }}>
+          <div style={{background:'#fff',borderRadius:16,padding:24,width:540,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,.2)'}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:20}}><h3 style={{margin:0}}>📋 Chi tiết lịch hẹn #{selected.id}</h3><button onClick={() => setSelected(null)} style={{background:'none',border:'none',fontSize:'1.4rem',cursor:'pointer'}}>✕</button></div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+              {[['Khách hàng', selected.customerName],['Email', selected.customerEmail],['Điện thoại', selected.customerPhone],['Thú cưng', `${selected.petName} (${selected.petType})`],['Dịch vụ', selected.serviceName],['Nhân viên', selected.staffName],['Ngày hẹn', selected.date],['Giờ hẹn', selected.time],['Ghi chú', selected.note || '—']].map(([k,v]) => (
+                <div key={k as string} style={{background:'#f9fafb',padding:'10px 14px',borderRadius:8}}><div style={{fontSize:'0.75rem',color:'#9ca3af'}}>{k}</div><div style={{fontWeight:600}}>{v}</div></div>
+              ))}
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
+              <div>Trạng thái: {badge(selected.status)}</div>
+              <div style={{display:'flex',gap:8}}>
+                {next[selected.status] && <button className="ap-btn ap-btn-primary" onClick={() => { dispatch(updateAppointmentStatus({id:selected.id,status:next[selected.status]!})); setSelected({...selected,status:next[selected.status]!}); }}>{next[selected.status]==='confirmed'?'✅ Xác nhận':'🏁 Hoàn thành'}</button>}
+                {selected.status==='pending' && <button className="ap-btn" style={{background:'#fee2e2',color:'#991b1b'}} onClick={() => { dispatch(updateAppointmentStatus({id:selected.id,status:'cancelled'})); setSelected({...selected,status:'cancelled'}); }}>❌ Hủy lịch</button>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAdd && (
+        <div style={overlay} onClick={e => { if (e.target === e.currentTarget) setShowAdd(false); }}>
+          <div style={{background:'#fff',borderRadius:16,padding:24,width:560,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,.2)'}}>
+            <h3 style={{marginBottom:20}}>➕ Tạo lịch hẹn mới</h3>
+            <div className="ap-form-row">
+              <div className="ap-form-group"><label>Tên khách hàng *</label><input className="ap-input" value={form.customerName} onChange={e => setForm({...form,customerName:e.target.value})} /></div>
+              <div className="ap-form-group"><label>Điện thoại</label><input className="ap-input" value={form.customerPhone} onChange={e => setForm({...form,customerPhone:e.target.value})} /></div>
+              <div className="ap-form-group"><label>Email</label><input className="ap-input" value={form.customerEmail} onChange={e => setForm({...form,customerEmail:e.target.value})} /></div>
+              <div className="ap-form-group"><label>Tên thú cưng</label><input className="ap-input" value={form.petName} onChange={e => setForm({...form,petName:e.target.value})} /></div>
+              <div className="ap-form-group"><label>Loài</label>
+                <select className="ap-input" value={form.petType} onChange={e => setForm({...form,petType:e.target.value})}>
+                  {['Chó','Mèo','Thỏ','Khác'].map(t => <option key={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="ap-form-group"><label>Dịch vụ *</label>
+                <select className="ap-input" value={form.serviceId} onChange={e => setForm({...form,serviceId:e.target.value})}>
+                  <option value="">— Chọn dịch vụ —</option>
+                  {services.filter(s=>s.status==='active').map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="ap-form-group"><label>Nhân viên</label>
+                <select className="ap-input" value={form.staffId} onChange={e => setForm({...form,staffId:e.target.value})}>
+                  <option value="">— Chọn nhân viên —</option>
+                  {staff.filter(s=>s.status==='active').map(s => <option key={s.id} value={s.id}>{s.name} ({s.role})</option>)}
+                </select>
+              </div>
+              <div className="ap-form-group"><label>Ngày hẹn *</label><input className="ap-input" type="date" value={form.date} onChange={e => setForm({...form,date:e.target.value})} /></div>
+              <div className="ap-form-group"><label>Giờ hẹn</label><input className="ap-input" type="time" value={form.time} onChange={e => setForm({...form,time:e.target.value})} /></div>
+              <div className="ap-form-group ap-form-full"><label>Ghi chú</label><textarea className="ap-input" rows={2} value={form.note} onChange={e => setForm({...form,note:e.target.value})} /></div>
+              <div className="ap-form-group ap-form-full"><div className="ap-form-actions"><button className="ap-btn ap-btn-primary" onClick={handleAdd}>Tạo lịch hẹn</button><button className="ap-btn ap-btn-ghost" onClick={() => setShowAdd(false)}>Hủy</button></div></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

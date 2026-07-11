@@ -66,7 +66,6 @@ export const ProfilePage: React.FC = () => {
   );
 
   // Filter user's own orders and appointments
-  const myOrders = orders.filter(o => o.customerEmail === user.email);
   const myAppointments = appointments.filter(a => a.customerEmail === user.email);
   const myMessages = messages.filter(m => m.email === user.email);
 

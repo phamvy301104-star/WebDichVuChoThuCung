@@ -1,8 +1,9 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@stores/store';
 import { ManagedPet } from '@stores/slices/petMgmtSlice';
+import { addToCart } from '@stores/slices/cartSlice';
 import { Header } from '@components/Common/Header';
 import { Footer } from '@components/Common/Footer';
 
@@ -20,7 +21,8 @@ const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 
 
 export const PetListPage: React.FC = () => {
   const { pets } = useSelector((s: RootState) => s.petMgmt);
-  const { user, isAuthenticated } = useSelector((s: RootState) => s.auth);
+  const { user } = useSelector((s: RootState) => s.auth);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
   const [type, setType] = useState('all');
@@ -28,6 +30,7 @@ export const PetListPage: React.FC = () => {
   const [showContact, setShowContact] = useState(false);
   const [contactForm, setContactForm] = useState({ name: user?.name || '', phone: user?.phone || '', email: user?.email || '', message: '' });
   const [sent, setSent] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const approved = pets.filter(p => p.publishStatus === 'approved');
   const displayed = useMemo(() => approved.filter(p =>
@@ -35,8 +38,23 @@ export const PetListPage: React.FC = () => {
     (type === 'all' || p.listingType === type)
   ), [approved, filter, type]);
 
-  const openPet = (p: ManagedPet) => { setSelected(p); setSent(false); setContactForm({ name: user?.name || '', phone: user?.phone || '', email: user?.email || '', message: '' }); };
-  const closePet = () => { setSelected(null); setShowContact(false); setSent(false); };
+  const openPet = (p: ManagedPet) => { setSelected(p); setSent(false); setAddedToCart(false); setShowContact(false); setContactForm({ name: user?.name || '', phone: user?.phone || '', email: user?.email || '', message: '' }); };
+  const closePet = () => { setSelected(null); setShowContact(false); setSent(false); setAddedToCart(false); };
+
+  const handleAddToCart = (p: ManagedPet) => {
+    dispatch(addToCart({
+      product: {
+        _id: p.id, id: p.id,
+        name: `🐾 ${p.name} — ${p.breed}`,
+        price: p.price,
+        image: p.image,
+        description: p.description,
+        rating: 5,
+      } as any,
+      quantity: 1,
+    }));
+    setAddedToCart(true);
+  };
 
   const handleContact = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,10 +166,31 @@ export const PetListPage: React.FC = () => {
 
                   {selected.description && <p style={{ color: '#555', lineHeight: 1.7, fontSize: '0.9rem', marginBottom: 20 }}>{selected.description}</p>}
 
-                  <button onClick={() => setShowContact(true)}
-                    style={{ width: '100%', background: '#111', color: '#fff', border: 'none', padding: '14px', borderRadius: 50, fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>
-                    {selected.listingType === 'adoption' ? '🏠 Đăng ký nhận nuôi' : '📞 Liên hệ mua bé'}
-                  </button>
+                  {/* Sale pet: add to cart */}
+                  {selected.listingType === 'sale' && (
+                    addedToCart ? (
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: '16px 20px', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#166534', fontWeight: 700 }}>✅ Đã thêm vào giỏ hàng!</span>
+                        <button onClick={() => { closePet(); navigate('/cart'); }}
+                          style={{ background: '#1a1a1a', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 50, fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem' }}>
+                          Xem giỏ hàng →
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => handleAddToCart(selected)}
+                        style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', padding: '14px', borderRadius: 50, fontWeight: 800, fontSize: '1rem', cursor: 'pointer', marginBottom: 10 }}>
+                        🛒 Thêm vào giỏ hàng — {fmt(selected.price)}
+                      </button>
+                    )
+                  )}
+
+                  {/* Adoption pet: contact form */}
+                  {selected.listingType === 'adoption' && (
+                    <button onClick={() => setShowContact(true)}
+                      style={{ width: '100%', background: '#111', color: '#fff', border: 'none', padding: '14px', borderRadius: 50, fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>
+                      🏠 Đăng ký nhận nuôi
+                    </button>
+                  )}
                 </>
               ) : sent ? (
                 <div style={{ textAlign: 'center', padding: '32px 0' }}>
@@ -163,7 +202,7 @@ export const PetListPage: React.FC = () => {
               ) : (
                 <form onSubmit={handleContact}>
                   <h3 style={{ fontWeight: 800, color: '#111', margin: '0 0 18px', fontSize: '1.1rem' }}>
-                    {selected.listingType === 'adoption' ? '🏠 Đăng ký nhận nuôi' : '📞 Thông tin liên hệ'} — <span style={{ color: '#c7603a' }}>{selected.name}</span>
+                    🏠 Đăng ký nhận nuôi — <span style={{ color: '#c7603a' }}>{selected.name}</span>
                   </h3>
                   <div className="ap-form-row">
                     <div className="ap-form-group"><label>Họ và tên *</label><input className="ap-input" value={contactForm.name} onChange={e => setContactForm({ ...contactForm, name: e.target.value })} required /></div>
@@ -173,7 +212,7 @@ export const PetListPage: React.FC = () => {
                     <div className="ap-form-group ap-form-full" style={{ display: 'flex', gap: 10 }}>
                       <button type="button" onClick={() => setShowContact(false)} style={{ flex: 1, background: '#f3f4f6', color: '#374151', border: 'none', padding: '12px', borderRadius: 50, fontWeight: 700, cursor: 'pointer' }}>← Quay lại</button>
                       <button type="submit" style={{ flex: 2, background: '#111', color: '#fff', border: 'none', padding: '12px', borderRadius: 50, fontWeight: 800, cursor: 'pointer' }}>
-                        {selected.listingType === 'adoption' ? '✅ Gửi đăng ký' : '📞 Gửi yêu cầu'}
+                        ✅ Gửi đăng ký nhận nuôi
                       </button>
                     </div>
                   </div>

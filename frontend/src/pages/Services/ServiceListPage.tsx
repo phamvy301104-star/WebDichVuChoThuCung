@@ -13,14 +13,14 @@ const CATEGORIES = [
 
 // Dữ liệu mẫu hiển thị khi backend chưa kết nối
 const MOCK_SERVICES: Partial<Service>[] = [
-  { _id: 's1', name: 'Tắm & Cắt lông', category: 'Spa', price: 150000, duration: 90, petTypes: ['Chó','Mèo'], description: 'Tắm sạch, cắt tỉa lông đẹp, vệ sinh tai, cắt móng chuyên nghiệp.' },
-  { _id: 's2', name: 'Spa toàn thân Premium', category: 'Spa', price: 280000, duration: 120, petTypes: ['Chó','Mèo'], description: 'Tắm gội + ủ lông + massage + nước hoa thú cưng cao cấp.' },
-  { _id: 's3', name: 'Cắt lông tạo kiểu', category: 'Spa', price: 200000, duration: 60, petTypes: ['Chó'], description: 'Cắt tỉa tạo kiểu theo yêu cầu, đẹp và giữ form lâu.' },
-  { _id: 's4', name: 'Khám sức khoẻ tổng quát', category: 'Y tế', price: 200000, duration: 30, petTypes: ['Chó','Mèo','Thỏ'], description: 'Kiểm tra sức khoẻ toàn diện, tư vấn dinh dưỡng và phòng bệnh.' },
-  { _id: 's5', name: 'Tiêm phòng vaccine', category: 'Y tế', price: 250000, duration: 15, petTypes: ['Chó','Mèo'], description: 'Tiêm đầy đủ các loại vaccine theo lịch, có theo dõi phản ứng.' },
-  { _id: 's6', name: 'Vệ sinh tai & mắt', category: 'Spa', price: 50000, duration: 20, petTypes: ['Chó','Mèo'], description: 'Làm sạch tai, mắt nhẹ nhàng, ngăn ngừa viêm nhiễm hiệu quả.' },
-  { _id: 's7', name: 'Triệt sản & phẫu thuật', category: 'Y tế', price: 1500000, duration: 120, petTypes: ['Chó','Mèo'], description: 'Phẫu thuật triệt sản an toàn bởi bác sĩ thú y có chuyên môn cao.' },
-  { _id: 's8', name: 'Tẩy giun & xét nghiệm', category: 'Y tế', price: 180000, duration: 30, petTypes: ['Chó','Mèo','Thỏ'], description: 'Tẩy giun định kỳ, xét nghiệm máu và kiểm tra ký sinh trùng.' },
+  { _id: 's1', name: 'Tắm & Cắt lông', category: 'Spa', price: 150000, duration: 90, petTypes: ['Chó','Mèo'], image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&h=220&fit=crop&auto=format', description: 'Tắm sạch, cắt tỉa lông đẹp, vệ sinh tai, cắt móng chuyên nghiệp.' },
+  { _id: 's2', name: 'Spa toàn thân Premium', category: 'Spa', price: 280000, duration: 120, petTypes: ['Chó','Mèo'], image: 'https://images.unsplash.com/photo-1601979031925-424e53b6caaa?w=400&h=220&fit=crop&auto=format', description: 'Tắm gội + ủ lông + massage + nước hoa thú cưng cao cấp.' },
+  { _id: 's3', name: 'Cắt lông tạo kiểu', category: 'Spa', price: 200000, duration: 60, petTypes: ['Chó'], image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=220&fit=crop&auto=format', description: 'Cắt tỉa tạo kiểu theo yêu cầu, đẹp và giữ form lâu.' },
+  { _id: 's4', name: 'Khám sức khoẻ tổng quát', category: 'Y tế', price: 200000, duration: 30, petTypes: ['Chó','Mèo','Thỏ'], image: 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=400&h=220&fit=crop&auto=format', description: 'Kiểm tra sức khoẻ toàn diện, tư vấn dinh dưỡng và phòng bệnh.' },
+  { _id: 's5', name: 'Tiêm phòng vaccine', category: 'Y tế', price: 250000, duration: 15, petTypes: ['Chó','Mèo'], image: 'https://images.unsplash.com/photo-1576201836106-db1758fd1c97?w=400&h=220&fit=crop&auto=format', description: 'Tiêm đầy đủ các loại vaccine theo lịch, có theo dõi phản ứng.' },
+  { _id: 's6', name: 'Vệ sinh tai & mắt', category: 'Spa', price: 50000, duration: 20, petTypes: ['Chó','Mèo'], image: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=220&fit=crop&auto=format', description: 'Làm sạch tai, mắt nhẹ nhàng, ngăn ngừa viêm nhiễm hiệu quả.' },
+  { _id: 's7', name: 'Triệt sản & phẫu thuật', category: 'Y tế', price: 1500000, duration: 120, petTypes: ['Chó','Mèo'], image: 'https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=400&h=220&fit=crop&auto=format', description: 'Phẫu thuật triệt sản an toàn bởi bác sĩ thú y có chuyên môn cao.' },
+  { _id: 's8', name: 'Tẩy giun & xét nghiệm', category: 'Y tế', price: 180000, duration: 30, petTypes: ['Chó','Mèo','Thỏ'], image: 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=400&h=220&fit=crop&auto=format', description: 'Tẩy giun định kỳ, xét nghiệm máu và kiểm tra ký sinh trùng.' },
 ];
 
 const getServiceIcon = (name: string): string => {

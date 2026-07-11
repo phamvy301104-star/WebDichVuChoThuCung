@@ -4,10 +4,10 @@ import { Header } from '@components/Common/Header';
 import { Footer } from '@components/Common/Footer';
 
 const featuredPets = [
-  { id: 'p1', name: 'Max', species: 'Chó', breed: 'Golden Retriever', age: '3 tuổi', icon: '🐕', bg: '#f9e8d0' },
-  { id: 'p3', name: 'Buddy', species: 'Chó', breed: 'Corgi', age: '1 tuổi', icon: '🐕', bg: '#fde8f0' },
-  { id: 'p2', name: 'Bella', species: 'Mèo', breed: 'Maine Coon', age: '8 tháng', icon: '🐱', bg: '#e8f0fd' },
-  { id: 'p5', name: 'Coco', species: 'Thỏ', breed: 'Holland Lop', age: '6 tháng', icon: '🐇', bg: '#e8fdf0' },
+  { id: 'p1', name: 'Max', species: 'Chó', breed: 'Golden Retriever', age: '3 tuổi', image: 'https://images.unsplash.com/photo-1601979031925-424e53b6caaa?w=400&h=260&fit=crop&auto=format' },
+  { id: 'p3', name: 'Buddy', species: 'Chó', breed: 'Corgi', age: '1 tuổi', image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=260&fit=crop&auto=format' },
+  { id: 'p2', name: 'Bella', species: 'Mèo', breed: 'Maine Coon', age: '8 tháng', image: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=260&fit=crop&auto=format' },
+  { id: 'p5', name: 'Coco', species: 'Thỏ', breed: 'Holland Lop', age: '6 tháng', image: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=260&fit=crop&auto=format' },
 ];
 
 const services = [
@@ -78,8 +78,12 @@ export const HomePage: React.FC = () => (
       {/* Right: Hero image card */}
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0' }}>
         <div style={{ position: 'relative', width: 400, height: 440 }}>
-          <div style={{ width: '100%', height: '100%', borderRadius: 28, background: 'linear-gradient(135deg, #e8d5c4, #d4e8c4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10rem', boxShadow: '0 20px 60px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
-            🐕
+          <div style={{ width: '100%', height: '100%', borderRadius: 28, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+            <img
+              src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&h=520&fit=crop&auto=format"
+              alt="Pet Care"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
           </div>
           <div style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', padding: '8px 20px', borderRadius: 12, fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap' }}>
             Sắp có bé mới · Since 2015
@@ -106,7 +110,12 @@ export const HomePage: React.FC = () => (
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.12)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.07)'; }}
               >
-                <div style={{ height: 180, background: p.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '5rem' }}>{p.icon}</div>
+                <div style={{ height: 200, overflow: 'hidden' }}>
+                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.3s' }}
+                    onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                    onMouseLeave={e => (e.currentTarget.style.transform = '')}
+                  />
+                </div>
                 <div style={{ padding: '16px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <h3 style={{ fontWeight: 800, color: '#1a1a1a', margin: 0, fontSize: '1.1rem' }}>{p.name}</h3>
@@ -162,56 +171,6 @@ export const HomePage: React.FC = () => (
       </div>
     </section>
 
-    <Footer />
-  </>
-);
-
-
-export const HomePage: React.FC = () => (
-  <>
-    <Header />
-    <main>
-      {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg,#3BB77E 0%,#2D9B6A 60%,#F6921E 100%)', color: '#fff', padding: '80px 20px', textAlign: 'center' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto' }}>
-          <div style={{ fontSize: '4rem', marginBottom: 16 }}>🐾</div>
-          <h1 style={{ fontSize: '2.8rem', fontWeight: 900, margin: '0 0 16px' }}>PetCare — Yêu thương thú cưng</h1>
-          <p style={{ fontSize: '1.15rem', opacity: 0.9, marginBottom: 32 }}>Dịch vụ chăm sóc thú cưng chuyên nghiệp · Sản phẩm chất lượng · Nhận nuôi thú cưng</p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/services" style={{ background: '#fff', color: '#3BB77E', padding: '12px 28px', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: '1rem' }}>Xem dịch vụ</Link>
-            <Link to="/products" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', padding: '12px 28px', borderRadius: 10, fontWeight: 700, textDecoration: 'none', fontSize: '1rem', border: '2px solid rgba(255,255,255,0.4)' }}>Cửa hàng</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section style={{ background: '#fff', padding: '40px 20px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 24, textAlign: 'center' }}>
-          {[['500+','Khách hàng'],['1000+','Lịch hẹn'],['50+','Dịch vụ'],['4.9★','Đánh giá']].map(([v,l]) => (
-            <div key={l} style={{ padding: 24, borderRadius: 12, background: '#f9fafb' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 900, color: '#3BB77E' }}>{v}</div>
-              <div style={{ color: '#6b7280', marginTop: 4 }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Services highlight */}
-      <section style={{ padding: '48px 20px', background: '#f9fafb' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ textAlign: 'center', fontWeight: 800, fontSize: '1.8rem', marginBottom: 32, color: '#1e1b4b' }}>Dịch vụ nổi bật</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 20 }}>
-            {[['✂️','Tắm & Cắt lông','Từ 150.000đ'],['🩺','Khám sức khoẻ','Từ 200.000đ'],['💉','Tiêm phòng','Từ 250.000đ'],['🏥','Phẫu thuật','Từ 1.500.000đ']].map(([icon,name,price]) => (
-              <div key={name} style={{ background: '#fff', borderRadius: 12, padding: 24, textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>{icon}</div>
-                <div style={{ fontWeight: 700, color: '#253D4E', marginBottom: 4 }}>{name}</div>
-                <div style={{ color: '#3BB77E', fontWeight: 600 }}>{price}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </main>
     <Footer />
   </>
 );

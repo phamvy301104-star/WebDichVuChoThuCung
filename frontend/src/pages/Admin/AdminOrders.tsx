@@ -11,6 +11,7 @@ const STATUS_MAP: Record<Order['status'], { label: string; color: string; bg: st
   completed:  { label: 'Hoàn thành',   color: '#166534', bg: '#dcfce7' },
   cancelled:  { label: 'Đã hủy',       color: '#991b1b', bg: '#fee2e2' },
 };
+const PAYMENT_LABEL: Record<string, string> = { cod: '💵 COD', bank: '🏦 Chuyển khoản', momo: '💜 MoMo' };
 
 const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
 
@@ -93,7 +94,7 @@ export const AdminOrders: React.FC = () => {
               <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-              {[['Khách hàng', selected.customerName], ['Email', selected.customerEmail], ['Điện thoại', selected.customerPhone], ['Địa chỉ', selected.address], ['Ngày đặt', new Date(selected.createdAt).toLocaleString('vi-VN')], ['Ghi chú', selected.note || '—']].map(([k, v]) => (
+              {[['Khách hàng', selected.customerName], ['Email', selected.customerEmail], ['Điện thoại', selected.customerPhone], ['Địa chỉ', selected.address], ['Thanh toán', PAYMENT_LABEL[selected.paymentMethod] || selected.paymentMethod], ['Ngày đặt', new Date(selected.createdAt).toLocaleString('vi-VN')], ['Mã giảm giá', selected.promoCode || '—'], ['Ghi chú', selected.note || '—']].map(([k, v]) => (
                 <div key={k} style={{ background: '#f9fafb', padding: '10px 14px', borderRadius: 8 }}>
                   <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{k}</div>
                   <div style={{ fontWeight: 600, wordBreak: 'break-all' }}>{v}</div>
@@ -115,7 +116,10 @@ export const AdminOrders: React.FC = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: '2px solid #f0f0f0' }}>
               <div>Trạng thái: {badge(selected.status)}</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 900 }}>Tổng: <span style={{ color: '#ef4444' }}>{fmt(selected.total)}</span></div>
+              <div style={{ textAlign: 'right' }}>
+                {selected.discount > 0 && <div style={{ fontSize: '0.85rem', color: '#166534', marginBottom: 2 }}>Giảm: −{fmt(selected.discount)}</div>}
+                <div style={{ fontSize: '1.2rem', fontWeight: 900 }}>Tổng: <span style={{ color: '#ef4444' }}>{fmt(selected.total)}</span></div>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               {nextStatus[selected.status] && (

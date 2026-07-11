@@ -34,7 +34,11 @@ export interface Order {
   customerPhone: string;
   address: string;
   items: OrderItem[];
+  subtotal: number;
+  discount: number;
+  promoCode: string;
   total: number;
+  paymentMethod: 'cod' | 'bank' | 'momo';
   status: 'pending' | 'confirmed' | 'processing' | 'completed' | 'cancelled';
   note: string;
   createdAt: string;
@@ -70,9 +74,9 @@ const SEED_PRODUCTS: ShopProduct[] = [
 ];
 
 const SEED_ORDERS: Order[] = [
-  { id: 'ORD001', customerName: 'Nguyễn Văn A', customerEmail: 'a@gmail.com', customerPhone: '0901234567', address: '123 Lê Lợi, Q1, TP.HCM', items: [{ productId: 'p1', productName: 'Thức ăn mèo Royal Canin 400g', productImage: 'https://images.unsplash.com/photo-1589924691995-400dc9562c07?w=80&h=80&fit=crop', price: 185000, quantity: 2 }], total: 370000, status: 'pending', note: '', createdAt: '2026-07-10T09:00:00' },
-  { id: 'ORD002', customerName: 'Trần Thị B', customerEmail: 'b@gmail.com', customerPhone: '0912345678', address: '456 Nguyễn Trãi, Q5, TP.HCM', items: [{ productId: 'p4', productName: 'Combo đồ chơi chuột nhỏ cho mèo', productImage: 'https://images.unsplash.com/photo-1601758174493-7ddff9b1a7e6?w=80&h=80&fit=crop', price: 55000, quantity: 1 }, { productId: 'p5', productName: 'Shampoo thú cưng hương lavender', productImage: 'https://images.unsplash.com/photo-1559757148-5f89397f3755?w=80&h=80&fit=crop', price: 120000, quantity: 1 }], total: 175000, status: 'confirmed', note: 'Giao buổi sáng', createdAt: '2026-07-10T10:30:00' },
-  { id: 'ORD003', customerName: 'Lê Văn C', customerEmail: 'c@gmail.com', customerPhone: '0923456789', address: '789 CMT8, Q3, TP.HCM', items: [{ productId: 'p6', productName: 'Cát vệ sinh cho mèo 5kg', productImage: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=80&h=80&fit=crop', price: 95000, quantity: 3 }], total: 285000, status: 'completed', note: '', createdAt: '2026-07-09T14:00:00' },
+  { id: 'ORD001', customerName: 'Nguyễn Văn A', customerEmail: 'a@gmail.com', customerPhone: '0901234567', address: '123 Lê Lợi, Q1, TP.HCM', items: [{ productId: 'p1', productName: 'Thức ăn mèo Royal Canin 400g', productImage: 'https://images.unsplash.com/photo-1589924691995-400dc9562c07?w=80&h=80&fit=crop', price: 185000, quantity: 2 }], subtotal: 370000, discount: 0, promoCode: '', total: 370000, paymentMethod: 'cod', status: 'pending', note: '', createdAt: '2026-07-10T09:00:00' },
+  { id: 'ORD002', customerName: 'Trần Thị B', customerEmail: 'b@gmail.com', customerPhone: '0912345678', address: '456 Nguyễn Trãi, Q5, TP.HCM', items: [{ productId: 'p4', productName: 'Combo đồ chơi chuột nhỏ cho mèo', productImage: 'https://images.unsplash.com/photo-1601758174493-7ddff9b1a7e6?w=80&h=80&fit=crop', price: 55000, quantity: 1 }, { productId: 'p5', productName: 'Shampoo thú cưng hương lavender', productImage: 'https://images.unsplash.com/photo-1559757148-5f89397f3755?w=80&h=80&fit=crop', price: 120000, quantity: 1 }], subtotal: 175000, discount: 17500, promoCode: 'PETCARE10', total: 157500, paymentMethod: 'momo', status: 'confirmed', note: 'Giao buổi sáng', createdAt: '2026-07-10T10:30:00' },
+  { id: 'ORD003', customerName: 'Lê Văn C', customerEmail: 'c@gmail.com', customerPhone: '0923456789', address: '789 CMT8, Q3, TP.HCM', items: [{ productId: 'p6', productName: 'Cát vệ sinh cho mèo 5kg', productImage: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=80&h=80&fit=crop', price: 95000, quantity: 3 }], subtotal: 285000, discount: 0, promoCode: '', total: 285000, paymentMethod: 'bank', status: 'completed', note: '', createdAt: '2026-07-09T14:00:00' },
 ];
 
 // ─── Load from localStorage with seed fallback ────────────────────────────────

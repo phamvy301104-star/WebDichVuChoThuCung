@@ -15,6 +15,8 @@ export const AppointmentFormPage: React.FC = () => {
   const dispatch = useDispatch();
   const { services, staff } = useSelector((s: RootState) => s.booking);
   const { user } = useSelector((s: RootState) => s.auth);
+  const { pets: myPets } = useSelector((s: RootState) => s.myPets);
+  const myPetList = myPets.filter(p => p.ownerId === user?.id);
 
   const service = services.find(s => s.id === serviceId);
   const activeStaff = staff.filter(s => s.status === 'active');
@@ -91,8 +93,21 @@ export const AppointmentFormPage: React.FC = () => {
                 ))}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>              {/* Quick-fill from profile pets */}
+              {myPetList.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: 8, fontSize: '0.9rem' }}>🐾 Chọn nhanh từ thú cưng của bạn</label>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {myPetList.map(p => (
+                      <button key={p.id} type="button"
+                        onClick={() => setForm({ ...form, petName: p.name, petType: p.species })}
+                        style={{ padding: '7px 14px', borderRadius: 50, border: `2px solid ${form.petName === p.name ? '#111' : '#e5e7eb'}`, background: form.petName === p.name ? '#111' : '#fff', color: form.petName === p.name ? '#fff' : '#374151', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>
+                        {p.name} ({p.species})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}                <div>
                   <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.9rem' }}>Tên thú cưng *</label>
                   <input className="ap-input" placeholder="VD: Buddy" value={form.petName} onChange={e => setForm({ ...form, petName: e.target.value })} required />
                 </div>

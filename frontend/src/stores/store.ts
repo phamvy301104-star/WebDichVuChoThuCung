@@ -11,6 +11,9 @@ import petMgmtReducer from './slices/petMgmtSlice';
 import contactReducer from './slices/contactSlice';
 import settingsReducer from './slices/settingsSlice';
 import promoReducer from './slices/promoSlice';
+import adminUsersReducer from './slices/adminUsersSlice';
+import reviewsReducer from './slices/reviewsSlice';
+import myPetsReducer from './slices/myPetsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +29,9 @@ export const store = configureStore({
     contact: contactReducer,
     settings: settingsReducer,
     promo: promoReducer,
+    adminUsers: adminUsersReducer,
+    reviews: reviewsReducer,
+    myPets: myPetsReducer,
   },
 });
 

@@ -2,6 +2,8 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@stores/store';
 import { updateProfile } from '@stores/slices/authSlice';
+import { addMyPet, updateMyPet, deleteMyPet, MyPet } from '@stores/slices/myPetsSlice';
+import { addReview } from '@stores/slices/reviewsSlice';
 import { Header } from '@components/Common/Header';
 import { Footer } from '@components/Common/Footer';
 import { Link, useNavigate } from 'react-router-dom';
@@ -15,9 +17,29 @@ export const ProfilePage: React.FC = () => {
   const { orders } = useSelector((s: RootState) => s.shop);
   const { appointments } = useSelector((s: RootState) => s.booking);
   const { messages } = useSelector((s: RootState) => s.contact);
+  const { pets: myPets } = useSelector((s: RootState) => s.myPets);
+  const { products } = useSelector((s: RootState) => s.shop);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const [tab, setTab] = useState<'profile' | 'orders' | 'appointments' | 'messages'>('profile');
+  const [tab, setTab] = useState<'profile' | 'orders' | 'appointments' | 'messages' | 'pets' | 'reviews'>('profile');
+
+  // My Pets state
+  const EMPTY_PET: Omit<MyPet,'id'> = { name:'', species:'Chó', breed:'', age:'', weight:'', gender:'', color:'', allergies:'', notes:'', ownerId: user?.id||'' };
+  const [petModal, setPetModal] = useState<{open:boolean;data?:MyPet}>({open:false});
+  const [petForm, setPetForm] = useState<Omit<MyPet,'id'>>({...EMPTY_PET});
+
+  // Review state
+  const [reviewModal, setReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ productId:'', productName:'', rating:5, title:'', comment:'' });
+  const [reviewSent, setReviewSent] = useState(false);
+
+  const myPetList = myPets.filter(p => p.ownerId === user?.id);
+  const myOrders = orders.filter(o => o.customerEmail === user?.email);
+
+  const openPetModal = (p?: MyPet) => { if(p){const{id,...r}=p;setPetForm(r);}else setPetForm({...EMPTY_PET,ownerId:user?.id||''}); setPetModal({open:true,data:p}); };
+  const savePet = () => { if(!petForm.name)return alert('Nhập tên thú cưng.'); if(petModal.data)dispatch(updateMyPet({id:petModal.data.id,...petForm})); else dispatch(addMyPet(petForm)); setPetModal({open:false}); };
+
+  const submitReview = () => { if(!reviewForm.productId||!reviewForm.comment)return alert('Chọn sản phẩm và nhập nội dung.'); dispatch(addReview({...reviewForm,userId:user?.id||'',userName:user?.name||'',userEmail:user?.email||''})); setReviewSent(true); setTimeout(()=>{setReviewModal(false);setReviewSent(false);setReviewForm({productId:'',productName:'',rating:5,title:'',comment:''});},2000); };
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
@@ -79,9 +101,11 @@ export const ProfilePage: React.FC = () => {
 
   const TABS = [
     { k: 'profile', l: '👤 Hồ sơ' },
+    { k: 'pets', l: `🐾 Thú cưng của tôi (${myPetList.length})` },
     { k: 'orders', l: `🛒 Đơn hàng (${myOrders.length})` },
     { k: 'appointments', l: `📅 Lịch hẹn (${myAppointments.length})` },
     { k: 'messages', l: `💬 Tin nhắn (${myMessages.length})` },
+    { k: 'reviews', l: '⭐ Viết đánh giá' },
   ];
 
   return (
@@ -259,6 +283,135 @@ export const ProfilePage: React.FC = () => {
                   </div>
                 ))
             }
+          </div>
+        )}
+
+        {/* ─── My Pets tab ─── */}
+        {tab === 'pets' && (
+          <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #f0ebe4', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontWeight: 800, margin: 0, fontSize: '1.1rem' }}>🐾 Thú cưng của tôi</h2>
+              <button onClick={() => openPetModal()} style={{ background: '#111', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: 50, fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem' }}>+ Thêm thú cưng</button>
+            </div>
+            <p style={{ color: '#9ca3af', fontSize: '0.82rem', marginBottom: 20 }}>Thêm thú cưng để tự động điền khi đặt lịch spa & dịch vụ.</p>
+            {myPetList.length === 0
+              ? <div style={{ textAlign: 'center', padding: '32px 20px', color: '#9ca3af' }}><div style={{ fontSize: '3rem', marginBottom: 12 }}>🐾</div><p>Chưa có thú cưng nào. Thêm bé đầu tiên!</p></div>
+              : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 14 }}>
+                  {myPetList.map(p => (
+                    <div key={p.id} style={{ background: '#faf9f7', borderRadius: 14, padding: '16px 18px', border: '1px solid #f0ebe4' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '1rem' }}>{p.name} <span style={{ color: p.gender === 'Cái' ? '#ec4899' : '#3b82f6', fontSize: '0.82rem' }}>{p.gender}</span></div>
+                          <div style={{ color: '#888', fontSize: '0.82rem' }}>{p.species}{p.breed && ` · ${p.breed}`}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => openPetModal(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#6b7280' }}>✏️</button>
+                          <button onClick={() => dispatch(deleteMyPet(p.id))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: '#ef4444' }}>🗑️</button>
+                        </div>
+                      </div>
+                      {[p.age && `🎂 ${p.age}`, p.weight && `⚖️ ${p.weight}`, p.color && `🎨 ${p.color}`].filter(Boolean).map((info, i) => (
+                        <div key={i} style={{ fontSize: '0.78rem', color: '#6b7280', marginBottom: 3 }}>{info}</div>
+                      ))}
+                      {p.allergies && <div style={{ marginTop: 8, background: '#fee2e2', color: '#991b1b', padding: '4px 10px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 600 }}>⚠️ Dị ứng: {p.allergies}</div>}
+                    </div>
+                  ))}
+                </div>
+            }
+            {/* Pet modal */}
+            {petModal.open && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+                onClick={e => { if (e.target === e.currentTarget) setPetModal({ open: false }); }}>
+                <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: 500, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                    <h3 style={{ margin: 0, fontWeight: 800 }}>{petModal.data ? '✏️ Sửa thú cưng' : '➕ Thêm thú cưng'}</h3>
+                    <button onClick={() => setPetModal({ open: false })} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#9ca3af' }}>✕</button>
+                  </div>
+                  <div className="ap-form-row">
+                    <div className="ap-form-group"><label>Tên thú cưng *</label><input className="ap-input" value={petForm.name} onChange={e => setPetForm({ ...petForm, name: e.target.value })} /></div>
+                    <div className="ap-form-group"><label>Loài</label>
+                      <select className="ap-input" value={petForm.species} onChange={e => setPetForm({ ...petForm, species: e.target.value })}>
+                        {['Chó', 'Mèo', 'Thỏ', 'Khác'].map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div className="ap-form-group"><label>Giống</label><input className="ap-input" value={petForm.breed} onChange={e => setPetForm({ ...petForm, breed: e.target.value })} placeholder="Golden Retriever..." /></div>
+                    <div className="ap-form-group"><label>Tuổi</label><input className="ap-input" value={petForm.age} onChange={e => setPetForm({ ...petForm, age: e.target.value })} placeholder="3 tuổi" /></div>
+                    <div className="ap-form-group"><label>Giới tính</label>
+                      <select className="ap-input" value={petForm.gender} onChange={e => setPetForm({ ...petForm, gender: e.target.value })}>
+                        <option value="">—</option><option value="Đực">Đực</option><option value="Cái">Cái</option>
+                      </select>
+                    </div>
+                    <div className="ap-form-group"><label>Cân nặng</label><input className="ap-input" value={petForm.weight} onChange={e => setPetForm({ ...petForm, weight: e.target.value })} placeholder="4 kg" /></div>
+                    <div className="ap-form-group"><label>Màu lông</label><input className="ap-input" value={petForm.color} onChange={e => setPetForm({ ...petForm, color: e.target.value })} placeholder="Vàng, đen trắng..." /></div>
+                    <div className="ap-form-group ap-form-full"><label>Dị ứng / Lưu ý sức khoẻ</label><input className="ap-input" value={petForm.allergies} onChange={e => setPetForm({ ...petForm, allergies: e.target.value })} placeholder="Dị ứng với shampoo ABC..." /></div>
+                    <div className="ap-form-group ap-form-full"><label>Ghi chú thêm</label><textarea className="ap-input" rows={2} value={petForm.notes} onChange={e => setPetForm({ ...petForm, notes: e.target.value })} /></div>
+                    <div className="ap-form-group ap-form-full">
+                      <div className="ap-form-actions">
+                        <button className="ap-btn ap-btn-primary" onClick={savePet}>{petModal.data ? 'Lưu' : 'Thêm thú cưng'}</button>
+                        <button className="ap-btn ap-btn-ghost" onClick={() => setPetModal({ open: false })}>Hủy</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Reviews tab ─── */}
+        {tab === 'reviews' && (
+          <div style={{ background: '#fff', borderRadius: 20, padding: 24, border: '1px solid #f0ebe4', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontWeight: 800, margin: 0, fontSize: '1.1rem' }}>⭐ Viết đánh giá sản phẩm</h2>
+              <button onClick={() => setReviewModal(true)} style={{ background: '#111', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: 50, fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem' }}>+ Viết đánh giá</button>
+            </div>
+            <p style={{ color: '#9ca3af', fontSize: '0.82rem' }}>Chia sẻ trải nghiệm của bạn về sản phẩm đã mua. Admin sẽ duyệt trước khi đăng.</p>
+            {reviewModal && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+                onClick={e => { if (e.target === e.currentTarget) setReviewModal(false); }}>
+                <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: 500, boxShadow: '0 24px 64px rgba(0,0,0,.2)' }}>
+                  {reviewSent ? (
+                    <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                      <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎉</div>
+                      <h3 style={{ fontWeight: 900 }}>Đã gửi đánh giá!</h3>
+                      <p style={{ color: '#888' }}>Admin sẽ xét duyệt và đăng lên sớm.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                        <h3 style={{ margin: 0, fontWeight: 800 }}>⭐ Viết đánh giá</h3>
+                        <button onClick={() => setReviewModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#9ca3af' }}>✕</button>
+                      </div>
+                      <div className="ap-form-row">
+                        <div className="ap-form-group ap-form-full"><label>Chọn sản phẩm *</label>
+                          <select className="ap-input" value={reviewForm.productId} onChange={e => { const p = products.find(p=>p.id===e.target.value); setReviewForm({...reviewForm,productId:e.target.value,productName:p?.name||''}); }}>
+                            <option value="">— Chọn sản phẩm —</option>
+                            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="ap-form-group ap-form-full">
+                          <label>Điểm đánh giá *</label>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                            {[1,2,3,4,5].map(n => (
+                              <button key={n} type="button" onClick={() => setReviewForm({...reviewForm,rating:n})}
+                                style={{ fontSize: '1.8rem', background: 'none', border: 'none', cursor: 'pointer', filter: n <= reviewForm.rating ? 'none' : 'grayscale(1) opacity(0.3)', transform: n <= reviewForm.rating ? 'scale(1.1)' : '' }}>⭐</button>
+                            ))}
+                            <span style={{ alignSelf: 'center', fontWeight: 700, color: '#f59e0b' }}>{reviewForm.rating}/5</span>
+                          </div>
+                        </div>
+                        <div className="ap-form-group ap-form-full"><label>Tiêu đề đánh giá</label><input className="ap-input" value={reviewForm.title} onChange={e => setReviewForm({...reviewForm,title:e.target.value})} placeholder="Sản phẩm tuyệt vời!" /></div>
+                        <div className="ap-form-group ap-form-full"><label>Nội dung đánh giá *</label><textarea className="ap-input" rows={4} value={reviewForm.comment} onChange={e => setReviewForm({...reviewForm,comment:e.target.value})} placeholder="Chia sẻ trải nghiệm của bạn..." required /></div>
+                        <div className="ap-form-group ap-form-full">
+                          <div className="ap-form-actions">
+                            <button className="ap-btn ap-btn-primary" onClick={submitReview}>📤 Gửi đánh giá</button>
+                            <button className="ap-btn ap-btn-ghost" onClick={() => setReviewModal(false)}>Hủy</button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

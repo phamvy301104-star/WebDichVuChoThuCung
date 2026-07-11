@@ -31,6 +31,13 @@ export const LoginPage: React.FC = () => (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 40px' }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <LoginForm />
+        <div style={{ textAlign: 'center', marginTop: 24, paddingTop: 20, borderTop: '1px solid #f0ebe4' }}>
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#9ca3af', textDecoration: 'none', fontSize: '0.88rem', fontWeight: 500, transition: 'color 0.15s' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#111')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#9ca3af')}>
+            ← Về trang chủ không cần đăng nhập
+          </Link>
+        </div>
       </div>
     </div>
   </div>

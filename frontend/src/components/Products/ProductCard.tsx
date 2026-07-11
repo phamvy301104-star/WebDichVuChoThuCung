@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import type { Product } from "@/types";
 import { useDispatch } from "react-redux";
 import { addToCart } from "@stores/slices/cartSlice";
@@ -7,15 +7,19 @@ interface ProductCardProps {
   product: Product;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+/**
+ * React.memo — chỉ re-render khi props thay đổi (Roadmap mục 4)
+ * useCallback — giữ nguyên reference của handler giữa các lần render (Roadmap mục 3)
+ */
+export const ProductCard = React.memo<ProductCardProps>(({ product }) => {
   const dispatch = useDispatch();
 
-  const handleAddToCart = () => {
+  // useCallback: hàm chỉ được tạo lại khi dispatch hoặc product thay đổi
+  const handleAddToCart = useCallback(() => {
     dispatch(addToCart({ product, quantity: 1 }));
     alert("Đã thêm vào giỏ hàng!");
-  };
+  }, [dispatch, product]);
 
-  return (
     <div className="product-card">
       <div className="product-image">
         {product.image ? (
@@ -47,4 +51,4 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
     </div>
   );
-};
+});

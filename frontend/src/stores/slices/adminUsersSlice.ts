@@ -17,6 +17,7 @@ export interface AdminUser {
 
 const SEED: AdminUser[] = [
   { id: 'u1', name: 'Admin PetCare', email: 'admin@petcare.com', phone: '0900000001', role: 'admin', status: 'active', address: '123 Nguyễn Văn Linh, Q7, TP.HCM', avatar: '', joinedAt: '2026-01-01', ordersCount: 0, totalSpent: 0, notes: '' },
+  { id: 'u0', name: 'Yasuo Admin', email: 'bezubts@gmail.com', phone: '', role: 'admin', status: 'active', address: '', avatar: '', joinedAt: '2026-07-12', ordersCount: 0, totalSpent: 0, notes: 'Quản trị viên chính' },
   { id: 'u2', name: 'Khách Hàng Demo', email: 'user@petcare.com', phone: '0900000002', role: 'user', status: 'active', address: '456 Lê Lợi, Q1, TP.HCM', avatar: '', joinedAt: '2026-03-15', ordersCount: 3, totalSpent: 825000, notes: '' },
   { id: 'u3', name: 'Nguyễn Văn A', email: 'a@gmail.com', phone: '0901234567', role: 'user', status: 'active', address: '789 CMT8, Q3, TP.HCM', avatar: '', joinedAt: '2026-05-10', ordersCount: 5, totalSpent: 1250000, notes: 'Khách thân thiết' },
   { id: 'u4', name: 'Trần Thị B', email: 'b@gmail.com', phone: '0912345678', role: 'user', status: 'active', address: '321 Võ Văn Tần, Q3, TP.HCM', avatar: '', joinedAt: '2026-06-01', ordersCount: 2, totalSpent: 370000, notes: '' },

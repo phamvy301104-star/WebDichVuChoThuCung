@@ -7,10 +7,13 @@ import { useGoogleLogin } from '@react-oauth/google';
 
 // Tài khoản demo dùng khi backend chưa kết nối
 const DEMO_ACCOUNTS: Record<string, { id: string; name: string; email: string; role: 'admin' | 'user'; phone: string }> = {
-  'admin@petcare.com': { id: '1', name: 'Admin PetCare', email: 'admin@petcare.com', role: 'admin', phone: '0900000001' },
-  'user@petcare.com':  { id: '2', name: 'Khách Hàng Demo', email: 'user@petcare.com',  role: 'user',  phone: '0900000002' },
+  'admin@petcare.com':  { id: '1', name: 'Admin PetCare',    email: 'admin@petcare.com',  role: 'admin', phone: '0900000001' },
+  'user@petcare.com':   { id: '2', name: 'Khách Hàng Demo',   email: 'user@petcare.com',   role: 'user',  phone: '0900000002' },
+  'bezubts@gmail.com':  { id: '3', name: 'Yasuo Admin',       email: 'bezubts@gmail.com',  role: 'admin', phone: '' },
 };
 const DEMO_PASSWORD = 'admin123';
+// Emails always get admin role (even via Google OAuth)
+const ADMIN_EMAILS = ['admin@petcare.com', 'bezubts@gmail.com'];
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -58,7 +61,8 @@ export const LoginForm: React.FC = () => {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
         const g = await res.json();
-        const user = { id: g.sub, name: g.name, email: g.email, avatar: g.picture, role: 'user' as const, phone: '' };
+        const isAdmin = ADMIN_EMAILS.includes(g.email?.toLowerCase());
+        const user = { id: g.sub, name: g.name, email: g.email, avatar: g.picture, role: isAdmin ? 'admin' as const : 'user' as const, phone: '' };
         const token = tokenResponse.access_token;
         localStorage.setItem('token', token);
         localStorage.setItem('petcare_user', JSON.stringify(user));

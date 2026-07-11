@@ -72,8 +72,17 @@ export const ProfilePage: React.FC = () => {
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) return alert('Vui lòng chọn file ảnh.');
+    if (file.size > 5 * 1024 * 1024) return alert('Ảnh tối đa 5MB.');
     const reader = new FileReader();
-    reader.onload = ev => setForm(f => ({ ...f, avatar: ev.target?.result as string }));
+    reader.onload = ev => {
+      const avatar = ev.target?.result as string;
+      setForm(f => ({ ...f, avatar }));
+      // Auto-save avatar immediately
+      dispatch(updateProfile({ avatar } as any));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    };
     reader.readAsDataURL(file);
   };
 

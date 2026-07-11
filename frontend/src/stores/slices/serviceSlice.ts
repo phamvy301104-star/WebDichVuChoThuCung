@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Service, Booking } from '@types/index';
+import type { Service, Booking } from '@/types';
 
 interface ServiceState {
   services: Service[];

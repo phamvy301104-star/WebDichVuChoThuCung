@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pet } from '@types/index';
+import React from "react";
+import type { Pet } from "@/types";
 
 interface PetCardProps {
   pet: Pet;
@@ -20,7 +20,7 @@ export const PetCard: React.FC<PetCardProps> = ({ pet, onSelect }) => {
         <p className="age">Tuổi: {pet.age} tuổi</p>
         {pet.description && <p className="description">{pet.description}</p>}
         {onSelect && (
-          <button onClick={() => onSelect(pet.id)} className="btn-view">
+          <button onClick={() => onSelect(pet.id || pet._id || "")} className="btn-view">
             Xem chi tiết
           </button>
         )}

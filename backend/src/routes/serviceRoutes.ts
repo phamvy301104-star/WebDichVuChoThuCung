@@ -1,12 +1,16 @@
 import { Router } from 'express';
+import { serviceController } from '../controllers/index';
+import { authMiddleware, adminMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// Route templates sẽ được thêm ở đây
-// Ví dụ:
-// router.get('/', getServices);
-// router.get('/:id', getServiceById);
-// router.post('/bookings', authMiddleware, createBooking);
-// router.get('/my-bookings', authMiddleware, getMyBookings);
+// ==================== PUBLIC ROUTES ====================
+router.get('/', serviceController.getServices);
+router.get('/:id', serviceController.getServiceById);
+
+// ==================== ADMIN ROUTES ====================
+router.post('/', authMiddleware, adminMiddleware, serviceController.createService);
+router.patch('/:id', authMiddleware, adminMiddleware, serviceController.updateService); // Chuẩn hóa dùng PATCH
+router.delete('/:id', authMiddleware, adminMiddleware, serviceController.deleteService);
 
 export default router;

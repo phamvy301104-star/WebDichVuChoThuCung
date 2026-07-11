@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Pet } from '@types/index';
+import type { Pet } from '@/types';
 
 interface PetState {
   pets: Pet[];

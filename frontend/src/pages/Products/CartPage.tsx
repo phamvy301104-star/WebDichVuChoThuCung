@@ -4,19 +4,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@stores/store';
 import { removeFromCart, updateCartItem, clearCart } from '@stores/slices/cartSlice';
 import { placeOrder } from '@stores/slices/shopSlice';
+import { usePromo, validatePromo } from '@stores/slices/promoSlice';
 import { Header } from '@components/Common/Header';
 import { Footer } from '@components/Common/Footer';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
-
-// Mock promo codes
-const PROMO_CODES: Record<string, { type: 'percent' | 'fixed'; value: number; label: string }> = {
-  'PETCARE10': { type: 'percent', value: 10, label: 'Giảm 10%' },
-  'NEWUSER':   { type: 'fixed',   value: 50000, label: 'Giảm 50.000đ' },
-  'SUMMER20':  { type: 'percent', value: 20, label: 'Giảm 20%' },
-  'VIP15':     { type: 'percent', value: 15, label: 'Giảm 15% VIP' },
-  'FREESHIP':  { type: 'fixed',   value: 30000, label: 'Miễn phí vận chuyển' },
-};
 
 const PAYMENT_METHODS = [
   { id: 'cod',  icon: '💵', label: 'Thanh toán khi nhận hàng', sub: 'COD — Nhận hàng rồi trả tiền' },
@@ -29,10 +21,11 @@ export const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const { items } = useSelector((s: RootState) => s.cart);
   const { user } = useSelector((s: RootState) => s.auth);
+  const { codes: promoCodes } = useSelector((s: RootState) => s.promo);
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
 
   const [showCheckout, setShowCheckout] = useState(false);
-  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '', address: '', note: '' });
+  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '', address: (user as any)?.address || '', note: '' });
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank' | 'momo'>('cod');
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number; label: string } | null>(null);
@@ -44,10 +37,9 @@ export const CartPage: React.FC = () => {
 
   const applyPromo = () => {
     const code = promoInput.toUpperCase().trim();
-    const promo = PROMO_CODES[code];
-    if (!promo) { setPromoError('Mã giảm giá không hợp lệ hoặc đã hết hạn.'); setAppliedPromo(null); return; }
-    const disc = promo.type === 'percent' ? Math.round(subtotal * promo.value / 100) : promo.value;
-    setAppliedPromo({ code, discount: disc, label: promo.label });
+    const result = validatePromo(promoCodes, code, subtotal);
+    if (!result.valid) { setPromoError(result.error || 'Mã không hợp lệ.'); setAppliedPromo(null); return; }
+    setAppliedPromo({ code, discount: result.discount, label: result.label });
     setPromoError('');
   };
 
@@ -55,6 +47,7 @@ export const CartPage: React.FC = () => {
 
   const handleOrder = () => {
     if (!form.name || !form.phone || !form.address) return alert('Vui lòng điền đầy đủ thông tin giao hàng.');
+    if (appliedPromo) dispatch(usePromo(appliedPromo.code));
     dispatch(placeOrder({
       customerName: form.name, customerEmail: form.email, customerPhone: form.phone,
       address: form.address, note: form.note,
@@ -155,7 +148,9 @@ export const CartPage: React.FC = () => {
                       <button onClick={applyPromo} style={{ background: '#1a1a1a', color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Áp dụng</button>
                     </div>
                     {promoError && <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: 6 }}>{promoError}</div>}
-                    <div style={{ marginTop: 10, fontSize: '0.78rem', color: '#9ca3af' }}>Mã hợp lệ: PETCARE10 · NEWUSER · SUMMER20 · VIP15</div>
+                    <div style={{ marginTop: 10, fontSize: '0.78rem', color: '#9ca3af' }}>
+                      Mã hiện có: {promoCodes.filter(c => c.status === 'active' && c.to >= new Date().toISOString().split('T')[0] && c.used < c.limit).map(c => c.code).join(' · ')}
+                    </div>
                   </>
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', padding: '10px 14px', borderRadius: 8, border: '1px solid #bbf7d0' }}>

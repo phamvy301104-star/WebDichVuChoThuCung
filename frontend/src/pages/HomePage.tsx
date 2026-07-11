@@ -170,7 +170,7 @@ export const HomePage: React.FC = () => {
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </div>
                   <div style={{ padding: '14px 16px' }}>
-                    <h3 style={{ fontWeight: 700, color: '#111', margin: '0 0 6px', fontSize: '0.9rem', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.name}</h3>
+                    <h3 style={{ fontWeight: 700, color: '#111', margin: '0 0 6px', fontSize: '0.9rem', lineHeight: 1.3, overflow: 'hidden', maxHeight: '2.6rem' }}>{p.name}</h3>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <span style={{ fontWeight: 800, color: '#c7603a', fontSize: '1rem' }}>{fmt(p.price)}</span>

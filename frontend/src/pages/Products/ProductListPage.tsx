@@ -38,9 +38,9 @@ export const ProductListPage: React.FC = () => {
           style={{
             textAlign: "center",
             padding: "40px 20px 28px",
-            background: "linear-gradient(135deg,#f59e0b,#ef4444)",
+            background: 'linear-gradient(135deg,#fdf6ec,#fce4ec)',
             borderRadius: 16,
-            color: "#fff",
+            color: '#1a1a1a',
             marginBottom: 32,
           }}
         >

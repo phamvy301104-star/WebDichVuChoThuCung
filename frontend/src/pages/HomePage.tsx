@@ -24,13 +24,12 @@ export const HomePage: React.FC = () => (
     {/* ===== HERO ===== */}
     <section style={{
       background: 'linear-gradient(135deg, #fce4ec 0%, #fdf6ec 50%, #eaf4f0 100%)',
-      minHeight: '90vh',
+      minHeight: '88vh',
       display: 'flex',
       alignItems: 'center',
-      padding: '0 5vw',
-      position: 'relative',
       overflow: 'hidden',
     }}>
+      <div style={{ maxWidth: 1280, width: '100%', margin: '0 auto', padding: '40px 48px', display: 'flex', alignItems: 'center', gap: 48 }}>
       {/* Left content */}
       <div style={{ flex: 1, maxWidth: 560, zIndex: 1 }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.06)', borderRadius: 20, padding: '5px 14px', fontSize: '0.82rem', marginBottom: 24, color: '#555' }}>
@@ -90,11 +89,12 @@ export const HomePage: React.FC = () => (
           </div>
         </div>
       </div>
+      </div>{/* end maxWidth wrapper */}
     </section>
 
     {/* ===== FEATURED PETS ===== */}
-    <section style={{ background: '#fff', padding: '64px 5vw' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <section style={{ background: '#fff', padding: '64px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
           <div>
             <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1a1a1a', margin: '0 0 6px' }}>Gặp gỡ các bé đang đợi ngôi nhà mới</h2>
@@ -131,8 +131,8 @@ export const HomePage: React.FC = () => (
     </section>
 
     {/* ===== SERVICES ===== */}
-    <section style={{ background: '#fff9f4', padding: '64px 5vw' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <section style={{ background: '#fff9f4', padding: '64px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
           <div>
             <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1a1a1a', margin: '0 0 6px' }}>Dịch vụ chăm sóc chuyên nghiệp</h2>
@@ -160,8 +160,8 @@ export const HomePage: React.FC = () => (
     </section>
 
     {/* ===== STATS BANNER ===== */}
-    <section style={{ background: '#1a1a1a', color: '#fff', padding: '48px 5vw' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 32, textAlign: 'center' }}>
+    <section style={{ background: '#1a1a1a', color: '#fff', padding: '48px 0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 32, textAlign: 'center' }}>
         {[['1.000+','Thú cưng đã về nhà'],['500+','Lịch hẹn/tháng'],['50+','Dịch vụ spa'],['4.9★','Đánh giá khách hàng']].map(([v, l]) => (
           <div key={l}>
             <div style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: 6, color: '#f0c080' }}>{v}</div>

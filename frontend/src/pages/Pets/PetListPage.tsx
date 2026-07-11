@@ -6,6 +6,18 @@ import { Footer } from "@components/Common/Footer";
 import { petService } from "@services/petService";
 import type { Pet } from "@/types";
 
+// Dữ liệu mẫu khi backend chưa kết nối
+const MOCK_PETS: Partial<Pet>[] = [
+  { _id: 'p1', name: 'Max', species: 'Chó', breed: 'Golden Retriever', age: 3, gender: 'male', icon: '🐕', description: 'Max rất thân thiện, hiền lành và thích trẻ em. Đã tiêm phòng đầy đủ.', status: 'available', listingType: 'adoption', price: 0 },
+  { _id: 'p2', name: 'Bella', species: 'Mèo', breed: 'Maine Coon', age: 1, gender: 'female', icon: '🐱', description: 'Bella lanh lợi, hay nghịch ngợm nhưng rất dễ thương và tình cảm.', status: 'available', listingType: 'adoption', price: 0 },
+  { _id: 'p3', name: 'Buddy', species: 'Chó', breed: 'Corgi', age: 1, gender: 'male', icon: '🐕', description: 'Buddy năng động, thích chạy nhảy và học các trò mới rất nhanh.', status: 'available', listingType: 'sale', price: 5000000 },
+  { _id: 'p4', name: 'Whiskers', species: 'Mèo', breed: 'Ba Tư', age: 4, gender: 'male', icon: '🐱', description: 'Whiskers điềm tĩnh, hợp với gia đình có không gian yên tĩnh.', status: 'rescue', listingType: 'adoption', price: 0 },
+  { _id: 'p5', name: 'Coco', species: 'Thỏ', breed: 'Holland Lop', age: 1, gender: 'female', icon: '🐇', description: 'Coco cực kỳ đáng yêu, hiền, không gây ồn. Phù hợp căn hộ.', status: 'available', listingType: 'sale', price: 1200000 },
+  { _id: 'p6', name: 'Luna', species: 'Mèo', breed: 'Exotic Shorthair', age: 2, gender: 'female', icon: '🐱', description: 'Luna béo tròn, lười biếng theo kiểu đáng yêu, thích được âu yếm.', status: 'available', listingType: 'adoption', price: 0 },
+  { _id: 'p7', name: 'Rocky', species: 'Chó', breed: 'Husky', age: 2, gender: 'male', icon: '🐕', description: 'Rocky năng động, trung thành, lông dày đẹp. Cần không gian rộng.', status: 'available', listingType: 'sale', price: 8000000 },
+  { _id: 'p8', name: 'Milo', species: 'Chó', breed: 'Poodle', age: 1, gender: 'male', icon: '🐩', description: 'Milo nhỏ nhắn, thông minh, không rụng lông. Phù hợp mọi gia đình.', status: 'available', listingType: 'sale', price: 6500000 },
+];
+
 export const PetListPage: React.FC = () => {
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const [pets, setPets] = useState<Pet[]>([]);
@@ -45,11 +57,10 @@ export const PetListPage: React.FC = () => {
     try {
       const salePets = await petService.getPetsForSale();
       const adoptionPets = await petService.getPetsForAdoption();
-      setPets([...salePets, ...adoptionPets]);
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message || err.message || "Lỗi khi tải thú cưng",
-      );
+      const all = [...salePets, ...adoptionPets];
+      setPets(all.length > 0 ? all : MOCK_PETS as Pet[]);
+    } catch {
+      setPets(MOCK_PETS as Pet[]);
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,7 @@ export const AdminCategories: React.FC = () => {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +19,9 @@ export const AdminCategories: React.FC = () => {
         const data = await productService.getCategories();
         setCategories(data);
       } catch (err: any) {
-        setError(err.response?.data?.message || err.message || "Lỗi khi tải danh mục");
+        setError(
+          err.response?.data?.message || err.message || "Lỗi khi tải danh mục",
+        );
       } finally {
         setLoading(false);
       }
@@ -40,7 +43,10 @@ export const AdminCategories: React.FC = () => {
 
     try {
       if (editingId) {
-        const updatedCategory = await productService.updateCategory(editingId, form);
+        const updatedCategory = await productService.updateCategory(
+          editingId,
+          form,
+        );
         setCategories((current) =>
           current.map((item) =>
             (item.id || item._id) === editingId ? updatedCategory : item,
@@ -53,12 +59,15 @@ export const AdminCategories: React.FC = () => {
       }
       setForm({ ...emptyForm });
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Không thể lưu danh mục");
+      alert(
+        err.response?.data?.message || err.message || "Không thể lưu danh mục",
+      );
     }
   };
 
   const handleEdit = (category: Category) => {
     setEditingId(category.id || category._id || null);
+    setShowForm(true);
     setForm({ name: category.name, description: category.description || "" });
   };
 
@@ -73,7 +82,9 @@ export const AdminCategories: React.FC = () => {
         setForm({ ...emptyForm });
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || err.message || "Không thể xóa danh mục");
+      alert(
+        err.response?.data?.message || err.message || "Không thể xóa danh mục",
+      );
     }
   };
 
@@ -91,6 +102,28 @@ export const AdminCategories: React.FC = () => {
           <div>Danh sách danh mục</div>
         </div>
 
+        <div
+          style={{
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            type="button"
+            className="ap-btn ap-btn-primary"
+            onClick={() => {
+              setShowForm((value) => !value);
+              if (!showForm) {
+                setEditingId(null);
+                setForm({ ...emptyForm });
+              }
+            }}
+          >
+            {showForm ? "Ẩn form" : "Thêm danh mục mới"}
+          </button>
+        </div>
+
         <div className="ap-filters">
           <input
             type="text"
@@ -102,98 +135,150 @@ export const AdminCategories: React.FC = () => {
         </div>
 
         {loading ? (
-          <div style={{ padding: 24, color: '#6b7280' }}>Đang tải danh mục...</div>
+          <div style={{ padding: 24, color: "#6b7280" }}>
+            Đang tải danh mục...
+          </div>
         ) : error ? (
-          <div style={{ padding: 24, color: '#ef4444' }}>{error}</div>
+          <div style={{ padding: 24, color: "#ef4444" }}>{error}</div>
         ) : (
           <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Tên danh mục</th>
-              <th>Mô tả</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCategories.map((category) => {
-              const id = category.id || category._id || '';
-              return (
-                <tr key={id}>
-                  <td>{category.name}</td>
-                  <td>{category.description}</td>
-                  <td className="ap-actions">
-                    <button
-                      className="ap-action-btn"
-                      onClick={() => handleEdit(category)}
-                    >
-                      Sửa
-                    </button>
-                    <button
-                      className="ap-action-btn ap-action-del"
-                      onClick={() => handleDelete(id)}
-                    >
-                      Xóa
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {filteredCategories.length === 0 && (
+            <thead>
               <tr>
-                <td colSpan={3}>Không có danh mục phù hợp.</td>
+                <th>Tên danh mục</th>
+                <th>Mô tả</th>
+                <th>Hành động</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredCategories.map((category) => {
+                const id = category.id || category._id || "";
+                return (
+                  <tr key={id}>
+                    <td>{category.name}</td>
+                    <td>{category.description}</td>
+                    <td className="ap-actions">
+                      <button
+                        className="ap-action-btn"
+                        onClick={() => handleEdit(category)}
+                      >
+                        Sửa
+                      </button>
+                      <button
+                        className="ap-action-btn ap-action-del"
+                        onClick={() => handleDelete(id)}
+                      >
+                        Xóa
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredCategories.length === 0 && (
+                <tr>
+                  <td colSpan={3}>Không có danh mục phù hợp.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         )}
       </div>
 
-      <div className="ap-card ap-form-card">
-        <div className="ap-card-header">
-          <div>{editingId ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}</div>
-        </div>
-        <form onSubmit={handleSave}>
-          <div className="ap-form-row">
-            <div className="ap-form-group">
-              <label>Tên danh mục</label>
-              <input
-                className="ap-search"
-                value={form.name}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, name: e.target.value }))
-                }
-                required
-              />
-            </div>
-            <div className="ap-form-group ap-form-full">
-              <label>Mô tả</label>
-              <textarea
-                className="ap-search"
-                rows={3}
-                value={form.description}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, description: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button type="submit" className="ap-btn ap-btn-primary">
-              {editingId ? "Lưu danh mục" : "Thêm danh mục"}
-            </button>
-            <button
-              type="button"
-              className="ap-btn ap-btn-secondary"
-              onClick={() => {
-                setEditingId(null);
-                setForm({ name: "", description: "" });
+      {showForm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.4)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+            padding: 16,
+          }}
+          onClick={() => {
+            setShowForm(false);
+            setEditingId(null);
+          }}
+        >
+          <div
+            className="ap-card ap-form-card"
+            style={{ maxWidth: 640, width: "100%", margin: "0 auto" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="ap-card-header"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              Hủy
-            </button>
+              <div>
+                {editingId ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
+              </div>
+              <button
+                type="button"
+                className="ap-btn ap-btn-secondary"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                }}
+                style={{ padding: "6px 12px", minWidth: 0 }}
+              >
+                Đóng
+              </button>
+            </div>
+            <form onSubmit={handleSave}>
+              <div className="ap-form-row">
+                <div className="ap-form-group">
+                  <label>Tên danh mục</label>
+                  <input
+                    className="ap-search"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="ap-form-group ap-form-full">
+                  <label>Mô tả</label>
+                  <textarea
+                    className="ap-search"
+                    rows={3}
+                    value={form.description}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <button type="submit" className="ap-btn ap-btn-primary">
+                  {editingId ? "Lưu danh mục" : "Thêm danh mục"}
+                </button>
+                <button
+                  type="button"
+                  className="ap-btn ap-btn-secondary"
+                  onClick={() => {
+                    setEditingId(null);
+                    setShowForm(false);
+                    setForm({ name: "", description: "" });
+                  }}
+                >
+                  Hủy
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,12 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 import "@styles/global.css";
+import { useSelector } from "react-redux";
+import { RootState } from "@stores/store";
 
 export const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const cartCount = useSelector((state: RootState) =>
+    state.cart.items.reduce((sum, it) => sum + (it.quantity || 0), 0),
+  );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -46,9 +51,33 @@ export const Header: React.FC = () => {
         </nav>
 
         <div className="header-actions">
-          <Link to="/cart" className="cart-icon" title="Giỏ hàng">
-            🛒
-          </Link>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <Link to="/cart" className="cart-icon" title="Giỏ hàng">
+              🛒
+            </Link>
+            {cartCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: -6,
+                  right: -6,
+                  minWidth: 18,
+                  height: 18,
+                  padding: "0 6px",
+                  borderRadius: 9,
+                  background: "#ef4444",
+                  color: "#fff",
+                  fontSize: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                }}
+              >
+                {cartCount}
+              </span>
+            )}
+          </div>
 
           {isAuthenticated && user ? (
             <div className="user-menu" ref={dropdownRef}>

@@ -144,8 +144,50 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ===== PROCESS ===== */}
+      {/* ===== PRODUCTS ===== */}
       <section style={{ background: '#faf9f7', padding: '72px 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 36 }}>
+            <div>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#111', margin: '0 0 6px', letterSpacing: '-0.02em' }}>Cửa hàng thú cưng</h2>
+              <p style={{ color: '#888', margin: 0, fontSize: '0.95rem' }}>Sản phẩm chất lượng cao, giá tốt nhất thị trường</p>
+            </div>
+            <Link to="/products" style={{ color: '#111', fontWeight: 700, textDecoration: 'none', fontSize: '0.9rem', borderBottom: '2px solid #111', paddingBottom: 2, whiteSpace: 'nowrap' }}>Xem tất cả →</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 20 }}>
+            {topProducts.map(p => (
+              <Link key={p.id} to={`/products/${p.id}`} style={{ textDecoration: 'none' }}>
+                <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', border: '1px solid #f0ebe4', transition: 'transform 0.2s, box-shadow 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(0,0,0,0.1)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)'; }}>
+                  <div style={{ height: 180, overflow: 'hidden', position: 'relative' }}>
+                    {p.originalPrice && (
+                      <span style={{ position: 'absolute', top: 10, left: 10, zIndex: 1, background: '#ef4444', color: '#fff', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: 8 }}>
+                        -{Math.round((1 - p.price / p.originalPrice) * 100)}%
+                      </span>
+                    )}
+                    <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                  <div style={{ padding: '14px 16px' }}>
+                    <h3 style={{ fontWeight: 700, color: '#111', margin: '0 0 6px', fontSize: '0.9rem', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.name}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontWeight: 800, color: '#c7603a', fontSize: '1rem' }}>{fmt(p.price)}</span>
+                        {p.originalPrice && <span style={{ fontSize: '0.78rem', color: '#9ca3af', textDecoration: 'line-through', marginLeft: 6 }}>{fmt(p.originalPrice)}</span>}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>⭐ {p.rating}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== PROCESS ===== */}
+      <section style={{ background: '#fff', padding: '72px 0' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#111', margin: '0 0 6px', letterSpacing: '-0.02em' }}>Quy trình nhận bé về nhà</h2>
           <p style={{ color: '#888', marginBottom: 48, fontSize: '0.95rem' }}>Đơn giản · Minh bạch · An tâm</p>

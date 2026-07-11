@@ -3,13 +3,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@stores/store';
 import { updateSettings, resetSettings, StoreSettings } from '@stores/slices/settingsSlice';
 
-type Tab = 'contact' | 'store' | 'social' | 'policy';
+type Tab = 'contact' | 'store' | 'social' | 'payment' | 'policy';
 
 const TABS: { k: Tab; l: string; icon: string }[] = [
-  { k: 'contact', l: 'Liên hệ',     icon: '📞' },
-  { k: 'store',   l: 'Cửa hàng',    icon: '🏪' },
-  { k: 'social',  l: 'Mạng xã hội', icon: '🌐' },
-  { k: 'policy',  l: 'Bảo hành',    icon: '🛡️' },
+  { k: 'contact', l: 'Liên hệ',      icon: '📞' },
+  { k: 'store',   l: 'Cửa hàng',     icon: '🏪' },
+  { k: 'payment', l: 'Thanh toán',   icon: '💳' },
+  { k: 'social',  l: 'Mạng xã hội',  icon: '🌐' },
+  { k: 'policy',  l: 'Bảo hành',     icon: '🛡️' },
 ];
 
 export const AdminSettings: React.FC = () => {
@@ -150,6 +151,91 @@ export const AdminSettings: React.FC = () => {
             <div className="ap-form-group ap-form-full">
               <label>Mô tả cửa hàng</label>
               <textarea className="ap-input" rows={4} value={form.description} onChange={e => set('description', e.target.value)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── PAYMENT TAB ─── */}
+      {tab === 'payment' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* COD */}
+          <div className="ap-card ap-form-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>💵 Thanh toán khi nhận hàng (COD)</h3>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.codEnabled} onChange={e => setForm({ ...form, codEnabled: e.target.checked })}
+                  style={{ width: 18, height: 18, accentColor: '#22c55e', cursor: 'pointer' }} />
+                <span style={{ fontWeight: 700, color: form.codEnabled ? '#166534' : '#9ca3af', fontSize: '0.88rem' }}>{form.codEnabled ? 'Đang bật' : 'Đã tắt'}</span>
+              </label>
+            </div>
+            <div className="ap-form-row">
+              <div className="ap-form-group ap-form-full">
+                <label>Ghi chú cho khách hàng</label>
+                <textarea className="ap-input" rows={2} value={form.codNote} onChange={e => setForm({ ...form, codNote: e.target.value })} disabled={!form.codEnabled} />
+              </div>
+            </div>
+          </div>
+
+          {/* Bank Transfer */}
+          <div className="ap-card ap-form-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>🏦 Chuyển khoản ngân hàng</h3>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.bankEnabled} onChange={e => setForm({ ...form, bankEnabled: e.target.checked })}
+                  style={{ width: 18, height: 18, accentColor: '#22c55e', cursor: 'pointer' }} />
+                <span style={{ fontWeight: 700, color: form.bankEnabled ? '#166534' : '#9ca3af', fontSize: '0.88rem' }}>{form.bankEnabled ? 'Đang bật' : 'Đã tắt'}</span>
+              </label>
+            </div>
+            <div className="ap-form-row">
+              <div className="ap-form-group"><label>Tên ngân hàng</label><input className="ap-input" value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} placeholder="Vietcombank" disabled={!form.bankEnabled} /></div>
+              <div className="ap-form-group"><label>Số tài khoản</label><input className="ap-input" value={form.bankNumber} onChange={e => setForm({ ...form, bankNumber: e.target.value })} placeholder="1234567890" disabled={!form.bankEnabled} /></div>
+              <div className="ap-form-group"><label>Chủ tài khoản</label><input className="ap-input" value={form.bankOwner} onChange={e => setForm({ ...form, bankOwner: e.target.value })} placeholder="PETCARE VN" disabled={!form.bankEnabled} /></div>
+              <div className="ap-form-group"><label>Chi nhánh</label><input className="ap-input" value={form.bankBranch} onChange={e => setForm({ ...form, bankBranch: e.target.value })} placeholder="Chi nhánh Q7, TP.HCM" disabled={!form.bankEnabled} /></div>
+            </div>
+            {form.bankEnabled && (
+              <div style={{ marginTop: 8, background: '#f0fdf4', borderRadius: 10, padding: '12px 16px', border: '1px solid #bbf7d0' }}>
+                <div style={{ fontWeight: 700, color: '#166534', marginBottom: 6, fontSize: '0.82rem' }}>👁️ Hiển thị cho khách sau khi đặt hàng:</div>
+                <div style={{ fontSize: '0.85rem', color: '#374151', lineHeight: 1.8 }}>
+                  Ngân hàng: <b>{form.bankName}</b> · STK: <b>{form.bankNumber}</b> · Chủ TK: <b>{form.bankOwner}</b>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* MoMo */}
+          <div className="ap-card ap-form-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>💜 Ví MoMo</h3>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.momoEnabled} onChange={e => setForm({ ...form, momoEnabled: e.target.checked })}
+                  style={{ width: 18, height: 18, accentColor: '#22c55e', cursor: 'pointer' }} />
+                <span style={{ fontWeight: 700, color: form.momoEnabled ? '#166534' : '#9ca3af', fontSize: '0.88rem' }}>{form.momoEnabled ? 'Đang bật' : 'Đã tắt'}</span>
+              </label>
+            </div>
+            <div className="ap-form-row">
+              <div className="ap-form-group"><label>Số điện thoại MoMo</label><input className="ap-input" value={form.momoPhone} onChange={e => setForm({ ...form, momoPhone: e.target.value })} placeholder="0900123456" disabled={!form.momoEnabled} /></div>
+              <div className="ap-form-group"><label>Tên tài khoản MoMo</label><input className="ap-input" value={form.momoName} onChange={e => setForm({ ...form, momoName: e.target.value })} placeholder="PETCARE VN" disabled={!form.momoEnabled} /></div>
+              <div className="ap-form-group ap-form-full"><label>Hướng dẫn cho khách</label><textarea className="ap-input" rows={2} value={form.momoNote} onChange={e => setForm({ ...form, momoNote: e.target.value })} disabled={!form.momoEnabled} /></div>
+            </div>
+          </div>
+
+          {/* Shipping */}
+          <div className="ap-card ap-form-card">
+            <h3 style={{ marginBottom: 18, fontSize: '1rem', fontWeight: 800 }}>🚚 Phí vận chuyển</h3>
+            <div className="ap-form-row">
+              <div className="ap-form-group">
+                <label>Phí giao hàng mặc định (VND)</label>
+                <input className="ap-input" type="number" value={form.shippingFee} onChange={e => setForm({ ...form, shippingFee: +e.target.value })} placeholder="30000" />
+              </div>
+              <div className="ap-form-group">
+                <label>Miễn phí khi đơn từ (VND)</label>
+                <input className="ap-input" type="number" value={form.freeShipMinOrder} onChange={e => setForm({ ...form, freeShipMinOrder: +e.target.value })} placeholder="300000" />
+              </div>
+            </div>
+            <div style={{ background: '#f9fafb', borderRadius: 10, padding: '10px 14px', fontSize: '0.85rem', color: '#555' }}>
+              Đơn dưới <b>{form.freeShipMinOrder.toLocaleString('vi-VN')}đ</b> tính phí <b>{form.shippingFee.toLocaleString('vi-VN')}đ</b>. Đơn từ <b>{form.freeShipMinOrder.toLocaleString('vi-VN')}đ</b> miễn phí ship 🎉
             </div>
           </div>
         </div>

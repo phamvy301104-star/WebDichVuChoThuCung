@@ -22,6 +22,7 @@ export const CartPage: React.FC = () => {
   const { items } = useSelector((s: RootState) => s.cart);
   const { user } = useSelector((s: RootState) => s.auth);
   const { codes: promoCodes } = useSelector((s: RootState) => s.promo);
+  const { data: settings } = useSelector((s: RootState) => s.settings);
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
 
   const [showCheckout, setShowCheckout] = useState(false);
@@ -33,7 +34,15 @@ export const CartPage: React.FC = () => {
   const [placed, setPlaced] = useState(false);
 
   const discount = appliedPromo?.discount || 0;
-  const total = Math.max(0, subtotal - discount);
+  const shipping = subtotal - discount >= settings.freeShipMinOrder ? 0 : settings.shippingFee;
+  const total = Math.max(0, subtotal - discount + shipping);
+
+  // Dynamic payment methods from settings
+  const PAYMENT_METHODS = [
+    settings.codEnabled  && { id: 'cod',  icon: '💵', label: 'Thanh toán khi nhận hàng', sub: settings.codNote || 'COD — Nhận hàng rồi trả tiền' },
+    settings.bankEnabled && { id: 'bank', icon: '🏦', label: `Chuyển khoản ${settings.bankName}`, sub: `STK: ${settings.bankNumber} — ${settings.bankOwner}` },
+    settings.momoEnabled && { id: 'momo', icon: '💜', label: 'Ví MoMo', sub: `SĐT: ${settings.momoPhone} — ${settings.momoName}` },
+  ].filter(Boolean) as { id: string; icon: string; label: string; sub: string }[];
 
   const applyPromo = () => {
     const code = promoInput.toUpperCase().trim();
@@ -72,10 +81,11 @@ export const CartPage: React.FC = () => {
           <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: 20, marginBottom: 24, textAlign: 'left' }}>
             <div style={{ fontWeight: 700, color: '#166534', marginBottom: 10 }}>🏦 Thông tin chuyển khoản</div>
             <div style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 2 }}>
-              <div>Ngân hàng: <b>Vietcombank</b></div>
-              <div>Số tài khoản: <b>1234567890</b></div>
-              <div>Chủ tài khoản: <b>PETCARE VN</b></div>
-              <div>Nội dung: <b>DH {Date.now()}</b></div>
+              <div>Ngân hàng: <b>{settings.bankName}</b></div>
+              <div>Số tài khoản: <b>{settings.bankNumber}</b></div>
+              <div>Chủ tài khoản: <b>{settings.bankOwner}</b></div>
+              {settings.bankBranch && <div>Chi nhánh: <b>{settings.bankBranch}</b></div>}
+              <div>Nội dung CK: <b>DH {Date.now()}</b></div>
               <div>Số tiền: <b style={{ color: '#ef4444' }}>{fmt(total)}</b></div>
             </div>
           </div>
@@ -84,10 +94,10 @@ export const CartPage: React.FC = () => {
           <div style={{ background: '#fdf2ff', border: '1px solid #e879f9', borderRadius: 12, padding: 20, marginBottom: 24, textAlign: 'left' }}>
             <div style={{ fontWeight: 700, color: '#86198f', marginBottom: 10 }}>💜 Thanh toán MoMo</div>
             <div style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 2 }}>
-              <div>Số điện thoại MoMo: <b>0901 234 567</b></div>
-              <div>Tên: <b>PETCARE VN</b></div>
+              <div>Số điện thoại MoMo: <b>{settings.momoPhone}</b></div>
+              <div>Tên: <b>{settings.momoName}</b></div>
               <div>Số tiền: <b style={{ color: '#ef4444' }}>{fmt(total)}</b></div>
-              <div>Nội dung: <b>DH {Date.now()}</b></div>
+              {settings.momoNote && <div style={{ color: '#86198f', fontSize: '0.82rem', marginTop: 4 }}>{settings.momoNote}</div>}
             </div>
           </div>
         )}
@@ -167,7 +177,10 @@ export const CartPage: React.FC = () => {
               <div style={{ background: '#fff', borderRadius: 16, padding: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0ebe4' }}>
                 <div style={{ fontWeight: 700, marginBottom: 12, color: '#1a1a1a' }}>📋 Tóm tắt đơn hàng</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: '#6b7280', fontSize: '0.9rem' }}><span>Tạm tính</span><span>{fmt(subtotal)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: '#6b7280', fontSize: '0.9rem' }}><span>Phí vận chuyển</span><span style={{ color: '#22c55e' }}>Miễn phí</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: '#6b7280', fontSize: '0.9rem' }}>
+                  <span>Phí vận chuyển</span>
+                  <span style={{ color: shipping === 0 ? '#22c55e' : undefined }}>{shipping === 0 ? 'Miễn phí 🎉' : fmt(shipping)}</span>
+                </div>
                 {discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: '#166534', fontSize: '0.9rem', fontWeight: 600 }}><span>Giảm giá ({appliedPromo?.code})</span><span>−{fmt(discount)}</span></div>}
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '2px solid #f0ebe4', fontWeight: 900, fontSize: '1.1rem' }}>
                   <span>Tổng cộng</span><span style={{ color: '#ef4444' }}>{fmt(total)}</span>

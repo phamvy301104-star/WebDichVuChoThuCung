@@ -20,6 +20,20 @@ export interface StoreSettings {
   youtube: string;
   mapLink: string;
   warranty: string;
+  // Payment settings
+  codEnabled: boolean;
+  codNote: string;
+  bankEnabled: boolean;
+  bankName: string;
+  bankNumber: string;
+  bankOwner: string;
+  bankBranch: string;
+  momoEnabled: boolean;
+  momoPhone: string;
+  momoName: string;
+  momoNote: string;
+  freeShipMinOrder: number;
+  shippingFee: number;
 }
 
 const DEFAULT: StoreSettings = {
@@ -42,6 +56,20 @@ const DEFAULT: StoreSettings = {
   youtube: '',
   mapLink: 'https://maps.google.com',
   warranty: 'Bảo hành thú cưng: 30 ngày – 1 năm. Đổi trả sản phẩm trong 30 ngày.',
+  // Payment defaults
+  codEnabled: true,
+  codNote: 'Thanh toán tiền mặt khi nhận hàng. Nhân viên giao hàng sẽ thu tiền trực tiếp.',
+  bankEnabled: true,
+  bankName: 'Vietcombank',
+  bankNumber: '1234567890',
+  bankOwner: 'PETCARE VN',
+  bankBranch: 'Chi nhánh Quận 7, TP.HCM',
+  momoEnabled: true,
+  momoPhone: '0900123456',
+  momoName: 'PETCARE VN',
+  momoNote: 'Chuyển khoản MoMo và ghi nội dung mã đơn hàng.',
+  freeShipMinOrder: 300000,
+  shippingFee: 30000,
 };
 
 function load(): StoreSettings {

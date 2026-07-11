@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loginSuccess, loginFailure, setLoading } from '@stores/slices/authSlice';
 import { useAuth } from '@hooks/useAuth';
+import { useGoogleLogin } from '@react-oauth/google';
 
 // Tài khoản demo dùng khi backend chưa kết nối
 const DEMO_ACCOUNTS: Record<string, { id: string; name: string; email: string; role: 'admin' | 'user'; phone: string }> = {
@@ -49,10 +50,26 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Mock Google Login — thay bằng OAuth thật khi có Client ID
-    mockLogin('user@petcare.com');
-  };
+  // Real Google OAuth — needs VITE_GOOGLE_CLIENT_ID in .env
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const g = await res.json();
+        const user = { id: g.sub, name: g.name, email: g.email, avatar: g.picture, role: 'user' as const, phone: '' };
+        const token = tokenResponse.access_token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('petcare_user', JSON.stringify(user));
+        dispatch(loginSuccess({ user, token }));
+        navigate('/');
+      } catch {
+        alert('Không thể lấy thông tin tài khoản Google.');
+      }
+    },
+    onError: () => alert('Đăng nhập Google thất bại. Kiểm tra lại Client ID trong .env'),
+  });
 
   return (
     <form onSubmit={handleSubmit} className="login-form">
@@ -92,7 +109,7 @@ export const LoginForm: React.FC = () => {
       {/* Google Login */}
       <button
         type="button"
-        onClick={handleGoogleLogin}
+        onClick={() => googleLogin()}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           padding: '10px 16px', border: '1.5px solid #e5e7eb', borderRadius: 8, background: '#fff',

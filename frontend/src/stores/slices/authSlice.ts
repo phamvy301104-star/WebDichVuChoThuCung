@@ -44,11 +44,17 @@ const authSlice = createSlice({
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
     },
+    updateProfile: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        localStorage.setItem('petcare_user', JSON.stringify(state.user));
+      }
+    },
     clearError: (state) => {
       state.error = null;
     },
   },
 });
 
-export const { setLoading, loginSuccess, loginFailure, logout, setUser, clearError } = authSlice.actions;
+export const { setLoading, loginSuccess, loginFailure, logout, setUser, updateProfile, clearError } = authSlice.actions;
 export default authSlice.reducer;

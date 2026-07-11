@@ -167,7 +167,15 @@ export const HomePage: React.FC = () => {
                       </span>
                     )}
                     <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      onError={e => {
+                        const t = e.target as HTMLImageElement;
+                        t.style.display = 'none';
+                        if (t.parentElement) t.parentElement.style.background = 'linear-gradient(135deg,#fef9f0,#fef3c7)';
+                        const span = document.createElement('span');
+                        span.style.cssText = 'font-size:4rem;display:flex;align-items:center;justify-content:center;height:100%;';
+                        span.textContent = '🐾';
+                        t.parentElement?.appendChild(span);
+                      }} />
                   </div>
                   <div style={{ padding: '14px 16px' }}>
                     <h3 style={{ fontWeight: 700, color: '#111', margin: '0 0 6px', fontSize: '0.9rem', lineHeight: 1.3, overflow: 'hidden', maxHeight: '2.6rem' }}>{p.name}</h3>

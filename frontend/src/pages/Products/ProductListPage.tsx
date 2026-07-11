@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@stores/store';
@@ -8,9 +8,34 @@ import { Footer } from '@components/Common/Footer';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
 
+const CAT_ICONS: Record<string, string> = {
+  'Thức ăn': '🐱', 'Phụ kiện': '🎒', 'Đồ chơi': '🐭',
+  'Chăm sóc': '🛁', 'Y tế': '💊', 'Vệ sinh': '🪣',
+  'Chuồng & Nhà': '🏠', 'default': '🐾',
+};
+
+const CAT_BG: Record<string, string> = {
+  'Thức ăn': 'linear-gradient(135deg,#fef3c7,#fde68a)',
+  'Phụ kiện': 'linear-gradient(135deg,#dbeafe,#bfdbfe)',
+  'Đồ chơi': 'linear-gradient(135deg,#fce7f3,#fbcfe8)',
+  'Chăm sóc': 'linear-gradient(135deg,#d1fae5,#a7f3d0)',
+  'Y tế': 'linear-gradient(135deg,#e0e7ff,#c7d2fe)',
+  'default': 'linear-gradient(135deg,#f9fafb,#f3f4f6)',
+};
+
+const ProductImage: React.FC<{ src: string; alt: string; catName: string }> = ({ src, alt, catName }) => {
+  const [err, setErr] = useState(false);
+  const icon = CAT_ICONS[catName] || CAT_ICONS.default;
+  const bg = CAT_BG[catName] || CAT_BG.default;
+  if (err || !src) return (
+    <div style={{ width: '100%', height: '100%', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '4rem' }}>{icon}</div>
+  );
+  return <img src={src} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setErr(true)} />;
+};
+
 export const ProductListPage: React.FC = () => {
   const dispatch = useDispatch();
-  const { products, categories, brands } = useSelector((s: RootState) => s.shop);
+  const { products, categories } = useSelector((s: RootState) => s.shop);
   const activeProducts = products.filter(p => p.status === 'active');
 
   const getCatName = (id: string) => categories.find(c => c.id === id)?.name || 'Sản phẩm';
@@ -37,7 +62,7 @@ export const ProductListPage: React.FC = () => {
               <Link to={`/products/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div style={{ height: 180, overflow: 'hidden', position: 'relative' }}>
                   {p.originalPrice && <span style={{ position: 'absolute', top: 10, left: 10, zIndex: 1, background: '#ef4444', color: '#fff', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: 10 }}>-{Math.round((1 - p.price / p.originalPrice) * 100)}%</span>}
-                  <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/240x180?text=No+Image'; }} />
+                  <ProductImage src={p.image} alt={p.name} catName={getCatName(p.categoryId)} />
                 </div>
                 <div style={{ padding: '12px 14px 8px' }}>
                   <span style={{ background: '#f0ebe4', color: '#8b5e3c', fontSize: '0.72rem', fontWeight: 600, padding: '2px 7px', borderRadius: 5 }}>{getCatName(p.categoryId)}</span>

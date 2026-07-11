@@ -9,6 +9,7 @@ import shopReducer from './slices/shopSlice';
 import bookingReducer from './slices/bookingSlice';
 import petMgmtReducer from './slices/petMgmtSlice';
 import contactReducer from './slices/contactSlice';
+import settingsReducer from './slices/settingsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     booking: bookingReducer,
     petMgmt: petMgmtReducer,
     contact: contactReducer,
+    settings: settingsReducer,
   },
 });
 

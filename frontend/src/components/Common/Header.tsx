@@ -4,7 +4,6 @@ import { useAuth } from "@hooks/useAuth";
 import "@styles/global.css";
 import { useSelector } from "react-redux";
 import { RootState } from "@stores/store";
-
 export const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
@@ -13,6 +12,7 @@ export const Header: React.FC = () => {
   const cartCount = useSelector((state: RootState) =>
     state.cart.items.reduce((sum, it) => sum + (it.quantity || 0), 0),
   );
+  const phone = useSelector((s: RootState) => s.settings.data.phone);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -62,8 +62,8 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          <a href="tel:0900123456" style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#111', color: '#fff', padding: '8px 16px', borderRadius: 50, textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
-            📞 0900.123.456
+          <a href={`tel:${phone.replace(/\./g,'')}`} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#111', color: '#fff', padding: '8px 16px', borderRadius: 50, textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+            📞 {phone}
           </a>
 
           {isAuthenticated && user ? (

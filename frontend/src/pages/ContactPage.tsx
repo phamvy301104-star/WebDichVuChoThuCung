@@ -4,7 +4,6 @@ import { sendMessage } from '@stores/slices/contactSlice';
 import { RootState } from '@stores/store';
 import { Header } from '@components/Common/Header';
 import { Footer } from '@components/Common/Footer';
-
 const WARRANTY_PET = [
   { icon: '🥉', title: 'Gói Standard', duration: '30 ngày', desc: 'Bảo hành sức khoẻ cơ bản, hỗ trợ tư vấn 24/7' },
   { icon: '🥇', title: 'Gói Gold', duration: '6 tháng', desc: 'Khám miễn phí định kỳ, tiêm phòng nhắc lại' },
@@ -22,6 +21,7 @@ const SUBJECTS = ['Bảo hành thú cưng', 'Bảo hành sản phẩm', 'Tư v�
 export const ContactPage: React.FC = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((s: RootState) => s.auth);
+  const { data: settings } = useSelector((s: RootState) => s.settings);
   const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '', subject: 'Tư vấn dịch vụ', message: '' });
   const [sent, setSent] = useState(false);
   const [activeWarranty, setActiveWarranty] = useState<'pet' | 'product'>('pet');
@@ -118,10 +118,10 @@ export const ContactPage: React.FC = () => {
             <div style={{ background: '#111', color: '#fff', borderRadius: 20, padding: 28 }}>
               <h3 style={{ fontWeight: 800, marginBottom: 20, fontSize: '1.05rem' }}>📍 Thông tin liên hệ</h3>
               {[
-                ['📞', 'Hotline', '0900.123.456', 'Hỗ trợ 8:00 – 21:00 hàng ngày'],
-                ['📧', 'Email', 'support@petcare.vn', 'Phản hồi trong 2–4 giờ'],
-                ['📍', 'Địa chỉ', '123 Nguyễn Văn Linh, Q7', 'TP. Hồ Chí Minh'],
-                ['🕐', 'Giờ làm việc', 'Thứ 2 – Chủ nhật', '8:00 – 21:00'],
+                ['📞', 'Hotline', settings.phone, `Hỗ trợ ${settings.hoursWeekend} hàng ngày`],
+                ['📧', 'Email', settings.emailSupport, 'Phản hồi trong 2–4 giờ'],
+                ['📍', 'Địa chỉ', `${settings.address}, ${settings.district}`, settings.city],
+                ['🕐', 'Giờ làm việc', `T2–T6: ${settings.hoursWeekday}`, `T7–CN: ${settings.hoursWeekend}`],
               ].map(([icon, label, value, sub]) => (
                 <div key={label as string} style={{ display: 'flex', gap: 14, marginBottom: 20 }}>
                   <span style={{ fontSize: '1.4rem', flexShrink: 0 }}>{icon}</span>
@@ -138,8 +138,8 @@ export const ContactPage: React.FC = () => {
             <div style={{ background: '#fef3c7', borderRadius: 20, padding: 24, border: '1px solid #fcd34d' }}>
               <h3 style={{ fontWeight: 800, color: '#92400e', marginBottom: 10, fontSize: '1rem' }}>⚡ Yêu cầu bảo hành nhanh</h3>
               <p style={{ color: '#78350f', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: 16 }}>Gọi hotline hoặc gửi tin nhắn ngay bên trái với chủ đề <b>Bảo hành thú cưng</b> hoặc <b>Bảo hành sản phẩm</b>.</p>
-              <a href="tel:0900123456" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#92400e', color: '#fff', padding: '11px 20px', borderRadius: 50, textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem' }}>
-                📞 Gọi ngay 0900.123.456
+              <a href={`tel:${settings.phone.replace(/\./g,'')}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#92400e', color: '#fff', padding: '11px 20px', borderRadius: 50, textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem' }}>
+                📞 Gọi ngay {settings.phone}
               </a>
             </div>
 

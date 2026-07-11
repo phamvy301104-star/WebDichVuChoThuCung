@@ -38,46 +38,33 @@ export const Header: React.FC = () => {
       <div className="header-container">
         <Link to="/" className="logo">
           <span className="logo-icon">🐾</span>
-          <span className="logo-text">PetCare</span>
+          <div>
+            <span className="logo-text">PetCare</span>
+            <div style={{ fontSize: '0.6rem', color: '#9ca3af', fontWeight: 400, letterSpacing: '0.12em', marginTop: -2 }}>SINCE 2015 · PEACE OF MIND</div>
+          </div>
         </Link>
 
         <nav className="nav">
           <Link to="/">Trang chủ</Link>
-          <Link to="/services">Dịch vụ</Link>
-          <Link to="/products">Sản phẩm</Link>
           <Link to="/pets">Thú cưng</Link>
-          <Link to="/bookings">Đặt lịch</Link>
+          <Link to="/services">Spa & Dịch vụ</Link>
+          <Link to="/products">Cửa hàng</Link>
           <Link to="/contact">Liên hệ</Link>
         </nav>
 
-        <div className="header-actions">
+        <div className="header-actions" style={{ gap: '12px', alignItems: 'center' }}>
           <div style={{ position: "relative", display: "inline-block" }}>
-            <Link to="/cart" className="cart-icon" title="Giỏ hàng">
-              🛒
-            </Link>
+            <Link to="/cart" title="Giỏ hàng" style={{ fontSize: '1.3rem', textDecoration: 'none' }}>🛒</Link>
             {cartCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: -6,
-                  right: -6,
-                  minWidth: 18,
-                  height: 18,
-                  padding: "0 6px",
-                  borderRadius: 9,
-                  background: "#ef4444",
-                  color: "#fff",
-                  fontSize: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                }}
-              >
+              <span style={{ position: "absolute", top: -6, right: -6, minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: "#ef4444", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {cartCount}
               </span>
             )}
           </div>
+
+          <a href="tel:0900123456" style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#111', color: '#fff', padding: '8px 16px', borderRadius: 50, textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+            📞 0900.123.456
+          </a>
 
           {isAuthenticated && user ? (
             <div className="user-menu" ref={dropdownRef}>

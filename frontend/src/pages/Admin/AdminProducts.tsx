@@ -1,568 +1,153 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import { productService } from "@services/productService";
-import type { Product, Brand, Category } from "@/types";
+﻿import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '@stores/store';
+import { addProduct, updateProduct, deleteProduct, ShopProduct } from '@stores/slices/shopSlice';
 
-const emptyProductForm = {
-  name: "",
-  description: "",
-  price: 0,
-  quantity: 0,
-  categoryId: "",
-  brandId: "",
-  image: "",
+const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
+
+const EMPTY: Omit<ShopProduct, 'id' | 'rating' | 'sold'> = {
+  name: '', price: 0, originalPrice: undefined, image: '', categoryId: '', brandId: '',
+  description: '', stock: 0, status: 'active',
 };
 
+const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
+const dialog: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', width: 480 };
+
 export const AdminProducts: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [brandFilter, setBrandFilter] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ ...emptyProductForm });
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch();
+  const { products, categories, brands } = useSelector((s: RootState) => s.shop);
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState<{ open: boolean; mode: 'add' | 'edit' | 'view'; product?: ShopProduct }>({ open: false, mode: 'add' });
+  const [form, setForm] = useState<Omit<ShopProduct, 'id' | 'rating' | 'sold'>>(EMPTY);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [productData, categoryData, brandData] = await Promise.all([
-          productService.getProducts(),
-          productService.getCategories(),
-          productService.getBrands(),
-        ]);
-
-        setProducts(productData);
-        setCategories(categoryData);
-        setBrands(brandData);
-        setForm((prev) => ({
-          ...prev,
-          categoryId: categoryData[0]?.id || categoryData[0]?._id || "",
-          brandId: brandData[0]?.id || brandData[0]?._id || "",
-          image: "",
-        }));
-      } catch (err: any) {
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            "Lỗi khi tải dữ liệu sản phẩm",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((product) => {
-        const keyword = search.toLowerCase();
-        const categoryId = product.category?.id || product.category?._id || "";
-        const brandId = product.brand?.id || product.brand?._id || "";
-        const name = product.name || "";
-        const description = product.description || "";
-        const categoryName = product.category?.name || "";
-        const brandName = product.brand?.name || "";
-
-        const matchKeyword =
-          name.toLowerCase().includes(keyword) ||
-          description.toLowerCase().includes(keyword) ||
-          categoryName.toLowerCase().includes(keyword) ||
-          brandName.toLowerCase().includes(keyword);
-
-        const matchCategory = categoryFilter
-          ? categoryId === categoryFilter
-          : true;
-        const matchBrand = brandFilter ? brandId === brandFilter : true;
-        return matchKeyword && matchCategory && matchBrand;
-      }),
-    [products, search, categoryFilter, brandFilter],
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!form.categoryId || !form.brandId) {
-      alert("Vui lòng chọn danh mục và thương hiệu.");
-      return;
-    }
+  const openAdd = () => { setForm(EMPTY); setModal({ open: true, mode: 'add' }); };
+  const openEdit = (p: ShopProduct) => { const { id, rating, sold, ...rest } = p; setForm(rest); setModal({ open: true, mode: 'edit', product: p }); };
+  const openView = (p: ShopProduct) => setModal({ open: true, mode: 'view', product: p });
+  const close = () => setModal({ open: false, mode: 'add' });
 
-    try {
-      if (editingId) {
-        const updated = await productService.updateProduct(editingId, {
-          ...form,
-          // backend expects category/brand ids; cast to any to satisfy TS
-          category: form.categoryId as unknown as any,
-          brand: form.brandId as unknown as any,
-        });
-
-        setProducts((current) =>
-          current.map((product) => {
-            if ((product.id || product._id) === editingId) {
-              // updated.data may be undefined in the ApiResponse type; fallback to existing product
-              return (updated.data as Product) || product;
-            }
-            return product;
-          }),
-        );
-        setEditingId(null);
-      } else {
-        const created = await productService.createProduct({
-          ...form,
-          category: form.categoryId as unknown as any,
-          brand: form.brandId as unknown as any,
-        });
-        setProducts((current) => [
-          (created.data as Product) || ({} as Product),
-          ...current,
-        ]);
-      }
-
-      setForm({
-        ...emptyProductForm,
-        categoryId: categories[0]?.id || categories[0]?._id || "",
-        brandId: brands[0]?.id || brands[0]?._id || "",
-      });
-    } catch (err: any) {
-      alert(
-        err.response?.data?.message || err.message || "Lỗi khi lưu sản phẩm",
-      );
-    }
+  const handleSave = () => {
+    if (!form.name.trim() || !form.price) return alert('Vui lòng nhập tên và giá sản phẩm.');
+    if (modal.mode === 'add') dispatch(addProduct(form));
+    else if (modal.mode === 'edit' && modal.product) dispatch(updateProduct({ ...form, id: modal.product.id, rating: modal.product.rating, sold: modal.product.sold }));
+    close();
   };
 
-  const handleEdit = (product: Product) => {
-    setEditingId(product.id || product._id || null);
-    setShowForm(true);
-    setForm({
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      quantity: product.quantity,
-      categoryId: product.category.id || product.category._id || "",
-      brandId: product.brand.id || product.brand._id || "",
-      image: product.image || "",
-    });
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await productService.deleteProduct(id);
-      setProducts((current) =>
-        current.filter((item) => (item.id || item._id) !== id),
-      );
-      if (editingId === id) {
-        setEditingId(null);
-        setForm({ ...emptyProductForm });
-      }
-    } catch (err: any) {
-      alert(
-        err.response?.data?.message || err.message || "Lỗi khi xóa sản phẩm",
-      );
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="admin-page">
-        <div className="admin-page-header">
-          <div>
-            <h1 className="admin-page-title">Quản lý sản phẩm</h1>
-          </div>
-        </div>
-        <div className="ap-card">
-          <div className="ap-card-header">Đang tải dữ liệu...</div>
-        </div>
-      </div>
-    );
-  }
+  const getCatName = (id: string) => categories.find(c => c.id === id)?.name || '—';
+  const getBrandName = (id: string) => brands.find(b => b.id === id)?.name || '—';
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1 className="admin-page-title">Quản lý sản phẩm</h1>
-          <p className="admin-page-sub">
-            Thêm, chỉnh sửa và quản lý danh sách sản phẩm.
-          </p>
+          <h1 className="admin-page-title">🛍️ Quản lý sản phẩm</h1>
+          <p className="admin-page-sub">Tổng {products.length} sản phẩm</p>
         </div>
+        <button className="ap-btn ap-btn-primary" onClick={openAdd}>+ Thêm sản phẩm</button>
       </div>
-
       <div className="ap-card">
-        <div className="ap-card-header">
-          <div>Danh sách sản phẩm hiện có</div>
-        </div>
-
-        <div
-          style={{
-            marginBottom: 16,
-            display: "flex",
-            justifyContent: "flex-end",
-          }}
-        >
-          <button
-            className="ap-btn ap-btn-primary"
-            type="button"
-            onClick={() => {
-              setShowForm((value) => !value);
-              if (!showForm) {
-                setEditingId(null);
-                setForm({
-                  ...emptyProductForm,
-                  categoryId: categories[0]?.id || categories[0]?._id || "",
-                  brandId: brands[0]?.id || brands[0]?._id || "",
-                });
-              }
-            }}
-          >
-            {showForm ? "Ẩn form" : "Thêm sản phẩm mới"}
-          </button>
-        </div>
-
         <div className="ap-filters">
-          <input
-            type="text"
-            className="ap-search"
-            placeholder="Tìm kiếm sản phẩm..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <select
-            className="ap-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="">Tất cả danh mục</option>
-            {categories.map((category) => (
-              <option
-                key={category.id || category._id}
-                value={category.id || category._id}
-              >
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className="ap-select"
-            value={brandFilter}
-            onChange={(e) => setBrandFilter(e.target.value)}
-          >
-            <option value="">Tất cả thương hiệu</option>
-            {brands.map((brand) => (
-              <option key={brand.id || brand._id} value={brand.id || brand._id}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
+          <input className="ap-search" placeholder="🔍 Tìm sản phẩm..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-
-        {error ? (
-          <div style={{ padding: 24, color: "#ef4444" }}>{error}</div>
-        ) : (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Tên sản phẩm</th>
-                <th>Danh mục</th>
-                <th>Thương hiệu</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
-                <th>Đánh giá</th>
-                <th>Hành động</th>
+        <table className="admin-table">
+          <thead><tr><th>Ảnh</th><th>Tên sản phẩm</th><th>Danh mục</th><th>Thương hiệu</th><th>Giá</th><th>Kho</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+          <tbody>
+            {filtered.map(p => (
+              <tr key={p.id}>
+                <td><img src={p.image} alt={p.name} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8 }} /></td>
+                <td style={{ fontWeight: 600 }}>{p.name}</td>
+                <td><span className="ap-tag">{getCatName(p.categoryId)}</span></td>
+                <td>{getBrandName(p.brandId)}</td>
+                <td><b style={{ color: '#ef4444' }}>{fmt(p.price)}</b></td>
+                <td>{p.stock}</td>
+                <td><span style={{ padding: '3px 10px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 600, color: p.status === 'active' ? '#166534' : '#991b1b', background: p.status === 'active' ? '#dcfce7' : '#fee2e2' }}>{p.status === 'active' ? 'Đang bán' : 'Ẩn'}</span></td>
+                <td>
+                  <div className="ap-actions">
+                    <button className="ap-action-btn" onClick={() => openView(p)}>👁️</button>
+                    <button className="ap-action-btn" onClick={() => openEdit(p)}>✏️</button>
+                    <button className="ap-action-btn ap-action-del" onClick={() => setDeleteConfirm(p.id)}>🗑️</button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((product) => (
-                <tr key={product.id || product._id}>
-                  <td>{product.name}</td>
-                  <td>{product.category?.name || "-"}</td>
-                  <td>{product.brand?.name || "-"}</td>
-                  <td>{(product.price ?? 0).toLocaleString("vi-VN")}đ</td>
-                  <td>{product.quantity ?? 0}</td>
-                  <td>{(product.rating ?? 0).toFixed(1)} ⭐</td>
-                  <td className="ap-actions">
-                    <button
-                      className="ap-action-btn"
-                      onClick={() => handleEdit(product)}
-                    >
-                      Sửa
-                    </button>
-                    <button
-                      className="ap-action-btn ap-action-del"
-                      onClick={() =>
-                        handleDelete(product.id || product._id || "")
-                      }
-                    >
-                      Xóa
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredProducts.length === 0 && (
-                <tr>
-                  <td colSpan={7}>Không có sản phẩm phù hợp.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
+        {filtered.length === 0 && <div className="ap-empty">Không có sản phẩm nào</div>}
       </div>
 
-      {showForm && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.4)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 999,
-            padding: 16,
-          }}
-          onClick={() => {
-            setShowForm(false);
-            setEditingId(null);
-          }}
-        >
-          <div
-            className="ap-card ap-form-card"
-            style={{ maxWidth: 760, width: "100%", margin: "0 auto" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="ap-card-header"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                {editingId ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
-              </div>
-              <button
-                type="button"
-                className="ap-btn ap-btn-secondary"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingId(null);
-                }}
-                style={{ padding: "6px 12px", minWidth: 0 }}
-              >
-                Đóng
-              </button>
+      {deleteConfirm && (
+        <div style={overlay}>
+          <div style={dialog}>
+            <h3 style={{ marginBottom: 12 }}>⚠️ Xác nhận xóa</h3>
+            <p style={{ color: '#6b7280', marginBottom: 20 }}>Bạn có chắc muốn xóa sản phẩm này?</p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="ap-btn ap-btn-ghost" onClick={() => setDeleteConfirm(null)}>Hủy</button>
+              <button className="ap-btn" style={{ background: '#ef4444', color: '#fff' }} onClick={() => { dispatch(deleteProduct(deleteConfirm)); setDeleteConfirm(null); }}>Xóa</button>
             </div>
-            <form onSubmit={handleSave}>
-              <div className="ap-form-row">
-                <div className="ap-form-group">
-                  <label>Tên sản phẩm</label>
-                  <input
-                    className="ap-search"
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    required
-                  />
-                </div>
-                <div className="ap-form-group">
-                  <label>Danh mục</label>
-                  <select
-                    className="ap-select"
-                    value={form.categoryId}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        categoryId: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    <option value="">Chọn danh mục</option>
-                    {categories.map((category) => (
-                      <option
-                        key={category.id || category._id}
-                        value={category.id || category._id}
-                      >
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="ap-form-group">
-                  <label>Thương hiệu</label>
-                  <select
-                    className="ap-select"
-                    value={form.brandId}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, brandId: e.target.value }))
-                    }
-                    required
-                  >
-                    <option value="">Chọn thương hiệu</option>
-                    {brands.map((brand) => (
-                      <option
-                        key={brand.id || brand._id}
-                        value={brand.id || brand._id}
-                      >
-                        {brand.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+          </div>
+        </div>
+      )}
 
+      {modal.open && (
+        <div style={overlay} onClick={e => { if (e.target === e.currentTarget) close(); }}>
+          <div style={{ ...dialog, width: 640, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0 }}>{modal.mode === 'add' ? '➕ Thêm sản phẩm' : modal.mode === 'edit' ? '✏️ Sửa sản phẩm' : '👁️ Chi tiết'}</h3>
+              <button onClick={close} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            {modal.mode === 'view' && modal.product ? (
+              <div>
+                <img src={modal.product.image} alt={modal.product.name} style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 10, marginBottom: 16 }} />
+                <h2 style={{ marginBottom: 12 }}>{modal.product.name}</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                  {([['Giá bán', fmt(modal.product.price)], ['Giá gốc', modal.product.originalPrice ? fmt(modal.product.originalPrice) : '—'], ['Danh mục', getCatName(modal.product.categoryId)], ['Thương hiệu', getBrandName(modal.product.brandId)], ['Tồn kho', String(modal.product.stock)], ['Đã bán', String(modal.product.sold)]] as [string, string][]).map(([k, v]) => (
+                    <div key={k} style={{ background: '#f9fafb', padding: '10px 14px', borderRadius: 8 }}>
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{k}</div>
+                      <div style={{ fontWeight: 600 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ color: '#555', lineHeight: 1.6 }}>{modal.product.description}</p>
+              </div>
+            ) : (
               <div className="ap-form-row">
-                <div className="ap-form-group">
-                  <label>Giá</label>
-                  <input
-                    type="number"
-                    className="ap-search"
-                    value={form.price}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        price: Number(e.target.value),
-                      }))
-                    }
-                    min={0}
-                    required
-                  />
+                <div className="ap-form-group ap-form-full"><label>Tên sản phẩm *</label><input className="ap-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+                <div className="ap-form-group"><label>Giá bán (VND) *</label><input className="ap-input" type="number" value={form.price || ''} onChange={e => setForm({ ...form, price: +e.target.value })} /></div>
+                <div className="ap-form-group"><label>Giá gốc (VND)</label><input className="ap-input" type="number" value={form.originalPrice || ''} onChange={e => setForm({ ...form, originalPrice: e.target.value ? +e.target.value : undefined })} /></div>
+                <div className="ap-form-group"><label>Danh mục</label>
+                  <select className="ap-input" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })}>
+                    <option value="">— Chọn danh mục —</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
                 </div>
-                <div className="ap-form-group">
-                  <label>Số lượng</label>
-                  <input
-                    type="number"
-                    className="ap-search"
-                    value={form.quantity}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        quantity: Number(e.target.value),
-                      }))
-                    }
-                    min={0}
-                    required
-                  />
+                <div className="ap-form-group"><label>Thương hiệu</label>
+                  <select className="ap-input" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value })}>
+                    <option value="">— Chọn thương hiệu —</option>
+                    {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
                 </div>
+                <div className="ap-form-group"><label>Tồn kho</label><input className="ap-input" type="number" value={form.stock || ''} onChange={e => setForm({ ...form, stock: +e.target.value })} /></div>
+                <div className="ap-form-group ap-form-full"><label>URL ảnh</label><input className="ap-input" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} placeholder="https://..." /></div>
+                <div className="ap-form-group ap-form-full"><label>Mô tả</label><textarea className="ap-input" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+                <div className="ap-form-group"><label>Trạng thái</label>
+                  <select className="ap-input" value={form.status} onChange={e => setForm({ ...form, status: e.target.value as 'active' | 'inactive' })}>
+                    <option value="active">Đang bán</option>
+                    <option value="inactive">Ẩn</option>
+                  </select>
+                </div>
+                {form.image && <div className="ap-form-group"><label>Xem trước</label><img src={form.image} alt="preview" style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8 }} /></div>}
                 <div className="ap-form-group ap-form-full">
-                  <label>Mô tả</label>
-                  <textarea
-                    className="ap-search"
-                    rows={3}
-                    value={form.description}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="ap-form-row">
-                <div className="ap-form-group">
-                  <label>Ảnh sản phẩm (URL)</label>
-                  <input
-                    type="text"
-                    className="ap-search"
-                    placeholder="https://.../image.jpg"
-                    value={form.image}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, image: e.target.value }))
-                    }
-                  />
-                </div>
-                <div className="ap-form-group">
-                  <label>Tải ảnh từ máy</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="ap-search"
-                    onChange={(e) => {
-                      const file = e.target.files && e.target.files[0];
-                      if (file) {
-                        const maxBytes = 2 * 1024 * 1024; // 2MB
-                        if (file.size > maxBytes) {
-                          alert(
-                            "Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB hoặc dùng URL ảnh.",
-                          );
-                          e.target.value = "";
-                          return;
-                        }
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          setForm((prev) => ({
-                            ...prev,
-                            image: String(reader.result),
-                          }));
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                </div>
-                <div className="ap-form-group">
-                  <label>Xem trước</label>
-                  <div
-                    style={{
-                      minWidth: 120,
-                      minHeight: 80,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: "#fff",
-                      border: "1px solid #eee",
-                      borderRadius: 8,
-                    }}
-                  >
-                    {form.image ? (
-                      // eslint-disable-next-line jsx-a11y/img-redundant-alt
-                      <img
-                        src={form.image}
-                        alt="preview"
-                        style={{
-                          maxWidth: 120,
-                          maxHeight: 80,
-                          objectFit: "cover",
-                          borderRadius: 6,
-                        }}
-                      />
-                    ) : (
-                      <span style={{ color: "#9ca3af" }}>Chưa có ảnh</span>
-                    )}
+                  <div className="ap-form-actions">
+                    <button className="ap-btn ap-btn-primary" onClick={handleSave}>{modal.mode === 'add' ? 'Thêm sản phẩm' : 'Lưu thay đổi'}</button>
+                    <button className="ap-btn ap-btn-ghost" onClick={close}>Hủy</button>
                   </div>
                 </div>
               </div>
-
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                <button type="submit" className="ap-btn ap-btn-primary">
-                  {editingId ? "Lưu cập nhật" : "Thêm sản phẩm"}
-                </button>
-                <button
-                  type="button"
-                  className="ap-btn ap-btn-secondary"
-                  onClick={() => {
-                    setEditingId(null);
-                    setShowForm(false);
-                    setForm({
-                      ...emptyProductForm,
-                      categoryId: categories[0]?.id || categories[0]?._id || "",
-                      brandId: brands[0]?.id || brands[0]?._id || "",
-                    });
-                  }}
-                >
-                  Đặt lại
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}

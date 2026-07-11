@@ -5,6 +5,7 @@ import cartReducer from './slices/cartSlice';
 import serviceReducer from './slices/serviceSlice';
 import petReducer from './slices/petSlice';
 import appointmentReducer from './slices/appointmentSlice';
+import shopReducer from './slices/shopSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     service: serviceReducer,
     pet: petReducer,
     appointment: appointmentReducer,
+    shop: shopReducer,
   },
 });
 

@@ -1,213 +1,137 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import type { Order } from "@/types";
-import { orderService } from "@services/orderService";
+﻿import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '@stores/store';
+import { updateOrderStatus, Order } from '@stores/slices/shopSlice';
 
-const statusLabels: Record<string, string> = {
-  pending: "Chờ xử lý",
-  processing: "Đang xử lý",
-  shipped: "Đã gửi",
-  delivered: "Đã giao",
-  cancelled: "Đã hủy",
+const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
+const STATUS_MAP: Record<Order['status'], { label: string; color: string; bg: string }> = {
+  pending:    { label: 'Chờ xác nhận', color: '#92400e', bg: '#fef3c7' },
+  confirmed:  { label: 'Đã xác nhận',  color: '#1e40af', bg: '#dbeafe' },
+  processing: { label: 'Đang xử lý',   color: '#5b21b6', bg: '#ede9fe' },
+  completed:  { label: 'Hoàn thành',   color: '#166534', bg: '#dcfce7' },
+  cancelled:  { label: 'Đã hủy',       color: '#991b1b', bg: '#fee2e2' },
 };
 
-const nextStatusMap: Record<string, string | null> = {
-  pending: "processing",
-  processing: "shipped",
-  shipped: "delivered",
-  delivered: null,
-  cancelled: null,
-};
-
-const statusClass = (status: string) => {
-  switch (status) {
-    case "pending":
-      return "ap-tag";
-    case "processing":
-      return "ap-tag";
-    case "shipped":
-      return "ap-tag";
-    case "delivered":
-      return "ap-tag";
-    case "cancelled":
-      return "ap-tag";
-    default:
-      return "ap-tag";
-  }
-};
+const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 };
 
 export const AdminOrders: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const dispatch = useDispatch();
+  const { orders } = useSelector((s: RootState) => s.shop);
+  const [selected, setSelected] = useState<Order | null>(null);
+  const [filterStatus, setFilterStatus] = useState('');
 
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const data = await orderService.getAllOrders();
-        setOrders(data);
-      } catch (err) {
-        setError("Không tải được danh sách đơn hàng.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const filtered = orders.filter(o => !filterStatus || o.status === filterStatus);
 
-    loadOrders();
-  }, []);
-
-  const filteredOrders = useMemo(
-    () =>
-      orders.filter((order) => {
-        const keyword = search.toLowerCase();
-        const orderId = (order.id || order._id || "").toString();
-        const matchKeyword =
-          orderId.toLowerCase().includes(keyword) ||
-          order.user?.name?.toLowerCase().includes(keyword) ||
-          order.user?.email?.toLowerCase().includes(keyword);
-        const matchStatus = statusFilter ? order.status === statusFilter : true;
-        return matchKeyword && matchStatus;
-      }),
-    [orders, search, statusFilter],
-  );
-
-  const updateStatus = async (id: string) => {
-    const order = orders.find((order) => (order.id || order._id) === id);
-    if (!order) return;
-    const nextStatus = nextStatusMap[order.status];
-    if (!nextStatus) return;
-
-    try {
-      const updated = await orderService.updateOrderStatus(id, nextStatus);
-      setOrders((current) =>
-        current.map((item) => ((item.id || item._id) === id ? updated : item)),
-      );
-    } catch {
-      alert("Cập nhật trạng thái không thành công.");
-    }
+  const badge = (s: Order['status']) => {
+    const m = STATUS_MAP[s];
+    return <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: '0.78rem', fontWeight: 600, color: m.color, background: m.bg }}>{m.label}</span>;
   };
 
-  const cancelOrder = async (id: string) => {
-    try {
-      const updated = await orderService.cancelOrder(id);
-      setOrders((current) =>
-        current.map((order) =>
-          (order.id || order._id) === id ? updated : order,
-        ),
-      );
-    } catch {
-      alert("Hủy đơn hàng không thành công.");
-    }
+  const nextStatus: Partial<Record<Order['status'], Order['status']>> = {
+    pending: 'confirmed', confirmed: 'processing', processing: 'completed',
   };
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1 className="admin-page-title">Quản lý đơn hàng</h1>
-          <p className="admin-page-sub">
-            Theo dõi và cập nhật trạng thái đơn hàng bán hàng.
-          </p>
+          <h1 className="admin-page-title">📋 Quản lý đơn hàng</h1>
+          <p className="admin-page-sub">Tổng {orders.length} đơn · {orders.filter(o => o.status === 'pending').length} chờ xác nhận</p>
         </div>
       </div>
 
       <div className="ap-card">
-        <div className="ap-card-header">
-          <div>Danh sách đơn hàng</div>
-        </div>
-
         <div className="ap-filters">
-          <input
-            type="text"
-            className="ap-search"
-            placeholder="Tìm theo mã đơn, tên khách hàng hoặc email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <select
-            className="ap-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
+          <select className="ap-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="">Tất cả trạng thái</option>
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
+            {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
         </div>
-
-        {loading ? (
-          <div style={{ padding: 24, color: "#6b7280" }}>
-            Đang tải đơn hàng...
-          </div>
-        ) : error ? (
-          <div style={{ padding: 24, color: "#ef4444" }}>{error}</div>
-        ) : (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Khách hàng</th>
-                <th>Giá trị</th>
-                <th>Phương thức</th>
-                <th>Trạng thái</th>
-                <th>Ngày tạo</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.id}</td>
-                  <td>{order.user?.name || "Khách"}</td>
-                  <td>{order.totalPrice.toLocaleString("vi-VN")}đ</td>
-                  <td>{order.paymentMethod}</td>
-                  <td>
-                    <span className={statusClass(order.status)}>
-                      {statusLabels[order.status]}
-                    </span>
-                  </td>
-                  <td>
-                    {new Date(order.createdAt).toLocaleDateString("vi-VN")}
-                  </td>
-                  <td className="ap-actions">
-                    {nextStatusMap[order.status] && (
-                      <button
-                        className="ap-action-btn"
-                        onClick={() => updateStatus(order.id)}
-                      >
-                        Chuyển sang{" "}
-                        {
-                          statusLabels[
-                            nextStatusMap[order.status] ?? order.status
-                          ]
-                        }
+        <table className="admin-table">
+          <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Ngày đặt</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+          <tbody>
+            {filtered.map(o => (
+              <tr key={o.id}>
+                <td><b style={{ color: '#1a1a1a' }}>{o.id}</b></td>
+                <td>
+                  <div style={{ fontWeight: 600 }}>{o.customerName}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#6b7280' }}>{o.customerPhone}</div>
+                </td>
+                <td style={{ fontSize: '0.85rem', color: '#6b7280' }}>{o.items.length} sản phẩm</td>
+                <td><b style={{ color: '#ef4444' }}>{fmt(o.total)}</b></td>
+                <td style={{ fontSize: '0.82rem' }}>{new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
+                <td>{badge(o.status)}</td>
+                <td>
+                  <div className="ap-actions">
+                    <button className="ap-action-btn" onClick={() => setSelected(o)}>👁️</button>
+                    {nextStatus[o.status] && (
+                      <button className="ap-action-btn" style={{ background: '#dcfce7', color: '#166534' }}
+                        onClick={() => dispatch(updateOrderStatus({ id: o.id, status: nextStatus[o.status]! }))}>
+                        {nextStatus[o.status] === 'confirmed' ? '✅ Xác nhận' : nextStatus[o.status] === 'processing' ? '🔄 Xử lý' : '🏁 Hoàn thành'}
                       </button>
                     )}
-                    {order.status !== "cancelled" &&
-                      order.status !== "delivered" && (
-                        <button
-                          className="ap-action-btn ap-action-del"
-                          onClick={() => cancelOrder(order.id)}
-                        >
-                          Hủy
-                        </button>
-                      )}
-                  </td>
-                </tr>
-              ))}
-              {filteredOrders.length === 0 && (
-                <tr>
-                  <td colSpan={7}>Không có đơn hàng phù hợp.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+                    {o.status === 'pending' && (
+                      <button className="ap-action-btn ap-action-del"
+                        onClick={() => dispatch(updateOrderStatus({ id: o.id, status: 'cancelled' }))}>
+                        ❌ Hủy
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length === 0 && <div className="ap-empty">Không có đơn hàng nào</div>}
       </div>
+
+      {selected && (
+        <div style={overlay} onClick={e => { if (e.target === e.currentTarget) setSelected(null); }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: 580, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ margin: 0 }}>📄 Chi tiết đơn hàng #{selected.id}</h3>
+              <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+              {[['Khách hàng', selected.customerName], ['Email', selected.customerEmail], ['Điện thoại', selected.customerPhone], ['Địa chỉ', selected.address], ['Ngày đặt', new Date(selected.createdAt).toLocaleString('vi-VN')], ['Ghi chú', selected.note || '—']].map(([k, v]) => (
+                <div key={k} style={{ background: '#f9fafb', padding: '10px 14px', borderRadius: 8 }}>
+                  <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{k}</div>
+                  <div style={{ fontWeight: 600, wordBreak: 'break-all' }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>🛒 Sản phẩm đã đặt</div>
+              {selected.items.map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+                  <img src={item.productImage} alt={item.productName} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{item.productName}</div>
+                    <div style={{ fontSize: '0.82rem', color: '#6b7280' }}>x{item.quantity} · {fmt(item.price)} / sp</div>
+                  </div>
+                  <div style={{ fontWeight: 800, color: '#ef4444' }}>{fmt(item.price * item.quantity)}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: '2px solid #f0f0f0' }}>
+              <div>Trạng thái: {badge(selected.status)}</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900 }}>Tổng: <span style={{ color: '#ef4444' }}>{fmt(selected.total)}</span></div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              {nextStatus[selected.status] && (
+                <button className="ap-btn ap-btn-primary" onClick={() => { dispatch(updateOrderStatus({ id: selected.id, status: nextStatus[selected.status]! })); setSelected({ ...selected, status: nextStatus[selected.status]! }); }}>
+                  {nextStatus[selected.status] === 'confirmed' ? '✅ Xác nhận đơn' : nextStatus[selected.status] === 'processing' ? '🔄 Bắt đầu xử lý' : '🏁 Hoàn thành đơn'}
+                </button>
+              )}
+              {selected.status === 'pending' && (
+                <button className="ap-btn" style={{ background: '#fee2e2', color: '#991b1b' }} onClick={() => { dispatch(updateOrderStatus({ id: selected.id, status: 'cancelled' })); setSelected({ ...selected, status: 'cancelled' }); }}>
+                  ❌ Hủy đơn
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

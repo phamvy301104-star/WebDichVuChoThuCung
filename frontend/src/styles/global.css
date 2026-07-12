@@ -900,12 +900,11 @@ body {
   align-items: center;
 }
 
-
 .btn-login {
   padding: 0.45rem 1.1rem;
-  border: 2px solid rgba(255,255,255,0.8);
+  border: 2px solid #1a1a1a;
   border-radius: 20px;
-  color: white;
+  color: #1a1a1a;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9rem;
@@ -913,22 +912,22 @@ body {
   background: transparent;
 }
 .btn-login:hover {
-  background: rgba(255,255,255,0.15);
+  background: #f3f4f6;
 }
 
 .btn-register {
   padding: 0.45rem 1.1rem;
   border-radius: 20px;
-  background: white;
-  color: var(--primary-color);
+  background: #1a1a1a;
+  color: #fff;
   text-decoration: none;
   font-weight: 700;
   font-size: 0.9rem;
   transition: all 0.2s;
-  border: none;
+  border: 2px solid #1a1a1a;
 }
 .btn-register:hover {
-  background: #f3f4f6;
+  background: #333;
   transform: translateY(-1px);
 }
 
@@ -949,26 +948,26 @@ body {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  background: rgba(255,255,255,0.15);
-  border: 2px solid rgba(255,255,255,0.5);
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
   border-radius: 24px;
   padding: 0.3rem 0.8rem 0.3rem 0.3rem;
   cursor: pointer;
-  color: white;
+  color: #1a1a1a;
   font-size: 0.9rem;
   font-weight: 600;
   transition: all 0.2s;
 }
 .user-avatar-btn:hover {
-  background: rgba(255,255,255,0.25);
+  background: #e5e7eb;
 }
 
 .avatar-circle {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: white;
-  color: var(--primary-color);
+  background: #1a1a1a;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -34,14 +34,14 @@ export const CartPage: React.FC = () => {
   const [placed, setPlaced] = useState(false);
 
   const discount = appliedPromo?.discount || 0;
-  const shipping = subtotal - discount >= settings.freeShipMinOrder ? 0 : settings.shippingFee;
+  const shipping = subtotal - discount >= (settings.freeShipMinOrder ?? 300000) ? 0 : (settings.shippingFee ?? 30000);
   const total = Math.max(0, subtotal - discount + shipping);
 
   // Dynamic payment methods from settings
   const PAYMENT_METHODS = [
-    settings.codEnabled  && { id: 'cod',  icon: '💵', label: 'Thanh toán khi nhận hàng', sub: settings.codNote || 'COD — Nhận hàng rồi trả tiền' },
-    settings.bankEnabled && { id: 'bank', icon: '🏦', label: `Chuyển khoản ${settings.bankName}`, sub: `STK: ${settings.bankNumber} — ${settings.bankOwner}` },
-    settings.momoEnabled && { id: 'momo', icon: '💜', label: 'Ví MoMo', sub: `SĐT: ${settings.momoPhone} — ${settings.momoName}` },
+    (settings.codEnabled !== false)  && { id: 'cod',  icon: '💵', label: 'Thanh toán khi nhận hàng', sub: settings.codNote || 'COD — Nhận hàng rồi trả tiền' },
+    (settings.bankEnabled !== false) && { id: 'bank', icon: '🏦', label: `Chuyển khoản ${settings.bankName || 'Ngân hàng'}`, sub: `STK: ${settings.bankNumber || '...'} — ${settings.bankOwner || 'PETCARE VN'}` },
+    (settings.momoEnabled !== false) && { id: 'momo', icon: '💜', label: 'Ví MoMo', sub: `SĐT: ${settings.momoPhone || '...'} — ${settings.momoName || 'PETCARE VN'}` },
   ].filter(Boolean) as { id: string; icon: string; label: string; sub: string }[];
 
   const applyPromo = () => {

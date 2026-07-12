@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.DS_Store
+*.log
+npm-debug.log*
+.next/
+out/
+build/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/settings.json

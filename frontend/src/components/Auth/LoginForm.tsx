@@ -3,16 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loginSuccess } from '@stores/slices/authSlice';
 import { useAuth } from '@hooks/useAuth';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const HAS_GOOGLE = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-// ─── Google button component — only uses useGoogleLogin when inside GoogleOAuthProvider ───
-const GoogleBtn: React.FC<{ onSuccess: (user: any, token: string) => void }> = ({ onSuccess }) => {
-  // This component is only rendered when HAS_GOOGLE = true, so provider is always present
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useGoogleLogin } = require('@react-oauth/google');
+// GoogleBtn only renders when HAS_GOOGLE=true (app is wrapped in GoogleOAuthProvider)
+// so useGoogleLogin is safe to call here
+const GoogleBtn: React.FC<{ onSuccess: (g: any, token: string) => void }> = ({ onSuccess }) => {
   const login = useGoogleLogin({
-    onSuccess: async (tr: any) => {
+    onSuccess: async (tr) => {
       try {
         const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tr.access_token}` },

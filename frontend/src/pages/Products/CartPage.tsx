@@ -78,26 +78,61 @@ export const CartPage: React.FC = () => {
         <p style={{ color: '#6b7280', marginBottom: 6 }}>Đơn hàng của bạn đã được ghi nhận.</p>
         <p style={{ color: '#6b7280', marginBottom: 32 }}>Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.</p>
         {paymentMethod === 'bank' && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: 20, marginBottom: 24, textAlign: 'left' }}>
-            <div style={{ fontWeight: 700, color: '#166534', marginBottom: 10 }}>🏦 Thông tin chuyển khoản</div>
-            <div style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 2 }}>
-              <div>Ngân hàng: <b>{settings.bankName}</b></div>
-              <div>Số tài khoản: <b>{settings.bankNumber}</b></div>
-              <div>Chủ tài khoản: <b>{settings.bankOwner}</b></div>
-              {settings.bankBranch && <div>Chi nhánh: <b>{settings.bankBranch}</b></div>}
-              <div>Nội dung CK: <b>DH {Date.now()}</b></div>
-              <div>Số tiền: <b style={{ color: '#ef4444' }}>{fmt(total)}</b></div>
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+            <div style={{ fontWeight: 700, color: '#166534', marginBottom: 16, fontSize: '1rem' }}>🏦 Quét mã QR chuyển khoản</div>
+            <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              {/* VietQR Code */}
+              <div style={{ textAlign: 'center' }}>
+                <img
+                  src={`https://img.vietqr.io/image/${settings.bankCode || 'VCB'}-${settings.bankNumber}-compact2.png?amount=${total}&addInfo=DH${Date.now()}&accountName=${encodeURIComponent(settings.bankOwner || 'PETCARE VN')}`}
+                  alt="VietQR"
+                  style={{ width: 180, height: 180, borderRadius: 12, border: '3px solid #bbf7d0', background: '#fff' }}
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <div style={{ fontSize: '0.72rem', color: '#166534', marginTop: 6, fontWeight: 600 }}>Mã VietQR chuẩn</div>
+              </div>
+              {/* Account details */}
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 2.2 }}>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Ngân hàng:</span><b>{settings.bankName}</b></div>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Số TK:</span><b style={{ fontSize: '1rem', letterSpacing: '0.05em' }}>{settings.bankNumber}</b></div>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Chủ TK:</span><b>{settings.bankOwner}</b></div>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Số tiền:</span><b style={{ color: '#ef4444', fontSize: '1.1rem' }}>{fmt(total)}</b></div>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Nội dung:</span><b style={{ background: '#dcfce7', padding: '2px 8px', borderRadius: 6 }}>DH {Date.now()}</b></div>
+                </div>
+              </div>
             </div>
           </div>
         )}
         {paymentMethod === 'momo' && (
-          <div style={{ background: '#fdf2ff', border: '1px solid #e879f9', borderRadius: 12, padding: 20, marginBottom: 24, textAlign: 'left' }}>
-            <div style={{ fontWeight: 700, color: '#86198f', marginBottom: 10 }}>💜 Thanh toán MoMo</div>
-            <div style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 2 }}>
-              <div>Số điện thoại MoMo: <b>{settings.momoPhone}</b></div>
-              <div>Tên: <b>{settings.momoName}</b></div>
-              <div>Số tiền: <b style={{ color: '#ef4444' }}>{fmt(total)}</b></div>
-              {settings.momoNote && <div style={{ color: '#86198f', fontSize: '0.82rem', marginTop: 4 }}>{settings.momoNote}</div>}
+          <div style={{ background: '#fdf2ff', border: '1px solid #e879f9', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+            <div style={{ fontWeight: 700, color: '#86198f', marginBottom: 16, fontSize: '1rem' }}>💜 Quét mã QR thanh toán MoMo</div>
+            <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              {/* MoMo QR via VietQR or placeholder */}
+              <div style={{ textAlign: 'center' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`2|99|${settings.momoPhone}|${settings.momoName || 'PETCARE VN'}|||0|0|${total}|DH${Date.now()}`)}`}
+                  alt="MoMo QR"
+                  style={{ width: 180, height: 180, borderRadius: 12, border: '3px solid #e879f9', background: '#fff' }}
+                  onError={e => {
+                    (e.target as HTMLImageElement).src = `https://img.vietqr.io/image/momo-${settings.momoPhone}-compact2.png`;
+                  }}
+                />
+                <div style={{ fontSize: '0.72rem', color: '#86198f', marginTop: 6, fontWeight: 600 }}>Mã QR MoMo</div>
+              </div>
+              {/* MoMo details */}
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 2.2 }}>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Số MoMo:</span><b style={{ fontSize: '1rem' }}>{settings.momoPhone}</b></div>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Tên:</span><b>{settings.momoName}</b></div>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Số tiền:</span><b style={{ color: '#ef4444', fontSize: '1.1rem' }}>{fmt(total)}</b></div>
+                  <div style={{ display: 'flex', gap: 8 }}><span style={{ color: '#6b7280', minWidth: 100 }}>Nội dung:</span><b style={{ background: '#fae8ff', padding: '2px 8px', borderRadius: 6 }}>DH {Date.now()}</b></div>
+                </div>
+                <a href={`https://nhantien.momo.vn/${settings.momoPhone}`} target="_blank" rel="noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12, background: '#ae2d9f', color: '#fff', padding: '10px 20px', borderRadius: 50, textDecoration: 'none', fontWeight: 700, fontSize: '0.88rem' }}>
+                  💜 Mở ứng dụng MoMo
+                </a>
+              </div>
             </div>
           </div>
         )}

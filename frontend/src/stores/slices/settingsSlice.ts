@@ -24,6 +24,7 @@ export interface StoreSettings {
   codEnabled: boolean;
   codNote: string;
   bankEnabled: boolean;
+  bankCode: string;
   bankName: string;
   bankNumber: string;
   bankOwner: string;
@@ -60,6 +61,7 @@ const DEFAULT: StoreSettings = {
   codEnabled: true,
   codNote: 'Thanh toán tiền mặt khi nhận hàng. Nhân viên giao hàng sẽ thu tiền trực tiếp.',
   bankEnabled: true,
+  bankCode: 'VCB',
   bankName: 'Vietcombank',
   bankNumber: '1234567890',
   bankOwner: 'PETCARE VN',

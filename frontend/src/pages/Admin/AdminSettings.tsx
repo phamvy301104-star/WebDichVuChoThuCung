@@ -189,10 +189,18 @@ export const AdminSettings: React.FC = () => {
               </label>
             </div>
             <div className="ap-form-row">
-              <div className="ap-form-group"><label>Tên ngân hàng</label><input className="ap-input" value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} placeholder="Vietcombank" disabled={!form.bankEnabled} /></div>
+              <div className="ap-form-group"><label>Ngân hàng</label>
+                <select className="ap-input" value={form.bankName} onChange={e => {
+                  const CODES: Record<string,string> = { 'Vietcombank':'VCB','MB Bank':'MB','Techcombank':'TCB','BIDV':'BIDV','VietinBank':'ICB','Agribank':'AGR','TPBank':'TPB','VPBank':'VPB','ACB':'ACB','Sacombank':'STB','HDBank':'HDB','VIB':'VIB','OCB':'OCB','MSB':'MSB' };
+                  setForm({ ...form, bankName: e.target.value, bankCode: CODES[e.target.value] || form.bankCode });
+                }} disabled={!form.bankEnabled}>
+                  {['Vietcombank','MB Bank','Techcombank','BIDV','VietinBank','Agribank','TPBank','VPBank','ACB','Sacombank','HDBank','VIB','OCB','MSB'].map(b => <option key={b}>{b}</option>)}
+                </select>
+              </div>
+              <div className="ap-form-group"><label>Mã ngân hàng (VietQR)</label><input className="ap-input" value={form.bankCode} onChange={e => setForm({ ...form, bankCode: e.target.value.toUpperCase() })} placeholder="VCB" disabled={!form.bankEnabled} /></div>
               <div className="ap-form-group"><label>Số tài khoản</label><input className="ap-input" value={form.bankNumber} onChange={e => setForm({ ...form, bankNumber: e.target.value })} placeholder="1234567890" disabled={!form.bankEnabled} /></div>
               <div className="ap-form-group"><label>Chủ tài khoản</label><input className="ap-input" value={form.bankOwner} onChange={e => setForm({ ...form, bankOwner: e.target.value })} placeholder="PETCARE VN" disabled={!form.bankEnabled} /></div>
-              <div className="ap-form-group"><label>Chi nhánh</label><input className="ap-input" value={form.bankBranch} onChange={e => setForm({ ...form, bankBranch: e.target.value })} placeholder="Chi nhánh Q7, TP.HCM" disabled={!form.bankEnabled} /></div>
+              <div className="ap-form-group ap-form-full"><label>Chi nhánh</label><input className="ap-input" value={form.bankBranch} onChange={e => setForm({ ...form, bankBranch: e.target.value })} placeholder="Chi nhánh Q7, TP.HCM" disabled={!form.bankEnabled} /></div>
             </div>
             {form.bankEnabled && (
               <div style={{ marginTop: 8, background: '#f0fdf4', borderRadius: 10, padding: '12px 16px', border: '1px solid #bbf7d0' }}>

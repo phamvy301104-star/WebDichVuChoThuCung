@@ -1,11 +1,48 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { loginSuccess, loginFailure, setLoading } from '@stores/slices/authSlice';
+import { loginSuccess } from '@stores/slices/authSlice';
 import { useAuth } from '@hooks/useAuth';
-import { useGoogleLogin } from '@react-oauth/google';
 
 const HAS_GOOGLE = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+// ─── Google button component — only uses useGoogleLogin when inside GoogleOAuthProvider ───
+const GoogleBtn: React.FC<{ onSuccess: (user: any, token: string) => void }> = ({ onSuccess }) => {
+  // This component is only rendered when HAS_GOOGLE = true, so provider is always present
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useGoogleLogin } = require('@react-oauth/google');
+  const login = useGoogleLogin({
+    onSuccess: async (tr: any) => {
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tr.access_token}` },
+        });
+        const g = await res.json();
+        onSuccess(g, tr.access_token);
+      } catch {
+        alert('Không thể lấy thông tin Google. Thử lại.');
+      }
+    },
+    onError: () => alert('Đăng nhập Google thất bại.'),
+  });
+  return (
+    <button type="button" onClick={() => login()}
+      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '11px 16px', border: '1.5px solid #e5e7eb', borderRadius: 50, background: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', color: '#374151', marginBottom: 20, transition: 'box-shadow 0.15s' }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)')}
+      onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
+      <GoogleIcon /> Đăng nhập bằng Google
+    </button>
+  );
+};
+
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.6 0 6.6 5.5 2.7 13.5l7.8 6C12.4 13 17.8 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/>
+    <path fill="#FBBC05" d="M10.5 28.8A14.6 14.6 0 0 1 9.5 24c0-1.7.3-3.3.9-4.8l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-5.9z"/>
+    <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.2 0-11.5-4.2-13.4-9.9l-7.8 6C6.5 42.5 14.6 48 24 48z"/>
+  </svg>
+);
 
 // Tài khoản demo dùng khi backend chưa kết nối
 const DEMO_ACCOUNTS: Record<string, { id: string; name: string; email: string; role: 'admin' | 'user'; phone: string }> = {
@@ -35,6 +72,15 @@ export const LoginForm: React.FC = () => {
     navigate(user.role === 'admin' ? '/admin' : '/');
   };
 
+  const handleGoogleSuccess = (g: any, token: string) => {
+    const isAdmin = ADMIN_EMAILS.includes(g.email?.toLowerCase());
+    const user = { id: g.sub, name: g.name, email: g.email, avatar: g.picture, role: isAdmin ? 'admin' as const : 'user' as const, phone: '' };
+    localStorage.setItem('token', token);
+    localStorage.setItem('petcare_user', JSON.stringify(user));
+    dispatch(loginSuccess({ user, token }));
+    navigate(isAdmin ? '/admin' : '/');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingLocal(true);
@@ -43,46 +89,12 @@ export const LoginForm: React.FC = () => {
       await login(email, password);
       navigate('/');
     } catch {
-      // Fallback: dùng mock nếu backend chưa chạy
       const demo = DEMO_ACCOUNTS[email.toLowerCase()];
-      if (demo && password === DEMO_PASSWORD) {
-        mockLogin(email.toLowerCase());
-        return;
-      }
+      if (demo && password === DEMO_PASSWORD) { mockLogin(email.toLowerCase()); return; }
       setError('Email hoặc mật khẩu không đúng.');
     } finally {
       setLoadingLocal(false);
     }
-  };
-
-  // Real Google OAuth — only works when VITE_GOOGLE_CLIENT_ID is set in .env.local
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        const g = await res.json();
-        const isAdmin = ADMIN_EMAILS.includes(g.email?.toLowerCase());
-        const user = { id: g.sub, name: g.name, email: g.email, avatar: g.picture, role: isAdmin ? 'admin' as const : 'user' as const, phone: '' };
-        const token = tokenResponse.access_token;
-        localStorage.setItem('token', token);
-        localStorage.setItem('petcare_user', JSON.stringify(user));
-        dispatch(loginSuccess({ user, token }));
-        navigate('/');
-      } catch {
-        alert('Không thể lấy thông tin tài khoản Google.');
-      }
-    },
-    onError: () => alert('Đăng nhập Google thất bại.'),
-  });
-
-  const handleGoogleClick = () => {
-    if (!HAS_GOOGLE) {
-      alert('Google OAuth chưa được cấu hình. Vui lòng thêm VITE_GOOGLE_CLIENT_ID vào file .env.local');
-      return;
-    }
-    googleLogin();
   };
 
   return (
@@ -121,19 +133,16 @@ export const LoginForm: React.FC = () => {
         <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
       </div>
 
-      {/* Google Login */}
-      <button type="button" onClick={handleGoogleClick}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '11px 16px', border: '1.5px solid #e5e7eb', borderRadius: 50, background: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', color: '#374151', marginBottom: 20, transition: 'box-shadow 0.15s' }}
-        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)')}
-        onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
-        <svg width="18" height="18" viewBox="0 0 48 48">
-          <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.6 0 6.6 5.5 2.7 13.5l7.8 6C12.4 13 17.8 9.5 24 9.5z"/>
-          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/>
-          <path fill="#FBBC05" d="M10.5 28.8A14.6 14.6 0 0 1 9.5 24c0-1.7.3-3.3.9-4.8l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-5.9z"/>
-          <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.2 0-11.5-4.2-13.4-9.9l-7.8 6C6.5 42.5 14.6 48 24 48z"/>
-        </svg>
-        Đăng nhập bằng Google
-      </button>
+      {/* Google Login — only renders when GoogleOAuthProvider is present */}
+      {HAS_GOOGLE
+        ? <GoogleBtn onSuccess={handleGoogleSuccess} />
+        : (
+          <button type="button" disabled
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '11px 16px', border: '1.5px solid #e5e7eb', borderRadius: 50, background: '#f9fafb', cursor: 'not-allowed', fontWeight: 600, fontSize: '0.95rem', color: '#9ca3af', marginBottom: 20, opacity: 0.6 }}>
+            <GoogleIcon /> Đăng nhập bằng Google
+          </button>
+        )
+      }
 
       <p style={{ textAlign: 'center', fontSize: '0.88rem', color: '#6b7280', marginBottom: 0 }}>
         Chưa có tài khoản? <a href="/auth/register" style={{ color: '#111', fontWeight: 700 }}>Đăng ký ngay</a>
@@ -141,4 +150,3 @@ export const LoginForm: React.FC = () => {
     </div>
   );
 };
-

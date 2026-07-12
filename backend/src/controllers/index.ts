@@ -302,12 +302,52 @@ export const petController = {
     res.json({ success: true, data: pets });
   },
 
+  getAllPets: async (_req: Request, res: Response) => {
+    const pets = await Pet.find().populate('owner');
+    res.json({ success: true, data: pets });
+  },
+
   getPetById: async (req: Request, res: Response) => {
     const pet = await Pet.findById(req.params.id).populate('owner');
-    if (!pet) {
-      return res.status(404).json({ success: false, message: 'Thú cưng không tồn tại.' });
-    }
+    if (!pet) return res.status(404).json({ success: false, message: 'Thú cưng không tồn tại.' });
     res.json({ success: true, data: pet });
+  },
+
+  createPet: async (req: AuthRequest, res: Response) => {
+    if (!req.user?.id) return res.status(401).json({ success: false, message: 'Yêu cầu đăng nhập.' });
+    const pet = await Pet.create({ ...req.body, owner: req.user.id });
+    res.status(201).json({ success: true, data: pet });
+  },
+
+  updatePet: async (req: AuthRequest, res: Response) => {
+    const pet = await Pet.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!pet) return res.status(404).json({ success: false, message: 'Thú cưng không tồn tại.' });
+    res.json({ success: true, data: pet });
+  },
+
+  deletePet: async (req: AuthRequest, res: Response) => {
+    const pet = await Pet.findByIdAndDelete(req.params.id);
+    if (!pet) return res.status(404).json({ success: false, message: 'Thú cưng không tồn tại.' });
+    res.json({ success: true, message: 'Đã xóa thú cưng.' });
+  },
+
+  getMyPets: async (req: AuthRequest, res: Response) => {
+    if (!req.user?.id) return res.status(401).json({ success: false, message: 'Yêu cầu đăng nhập.' });
+    const pets = await Pet.find({ owner: req.user.id });
+    res.json({ success: true, data: pets });
+  },
+
+  getAllAdoptionRequests: async (_req: Request, res: Response) => {
+    res.json({ success: true, data: [] });
+  },
+
+  updateAdoptionRequestStatus: async (req: Request, res: Response) => {
+    res.json({ success: true, message: 'Đã cập nhật trạng thái.' });
+  },
+
+  createAdoptionRequest: async (req: AuthRequest, res: Response) => {
+    if (!req.user?.id) return res.status(401).json({ success: false, message: 'Yêu cầu đăng nhập.' });
+    res.status(201).json({ success: true, message: 'Yêu cầu nhận nuôi đã được gửi.' });
   },
 };
 

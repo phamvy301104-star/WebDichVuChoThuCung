@@ -64,8 +64,8 @@ export const RegisterForm: React.FC = () => {
             <input name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} placeholder="Nhập lại mật khẩu" required style={inputStyle} />
           </div>
           <button type="submit" disabled={loading}
-            style={{ width: '100%', background: '#c7603a', color: '#fff', border: 'none', padding: '13px', borderRadius: 50, fontWeight: 800, fontSize: '0.97rem', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: 4 }}>
-            {loading ? 'Đang tạo tài khoản...' : '🎉 Đăng ký ngay'}
+            style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', padding: '13px', borderRadius: 50, fontWeight: 800, fontSize: '0.97rem', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: 4 }}>
+            {loading ? 'Đang tạo tài khoản...' : 'Đăng ký ngay'}
           </button>
         </div>
       </form>

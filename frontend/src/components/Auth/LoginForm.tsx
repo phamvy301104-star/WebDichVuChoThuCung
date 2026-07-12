@@ -76,54 +76,47 @@ export const LoginForm: React.FC = () => {
   });
 
   return (
-    <form onSubmit={handleSubmit} className="login-form">
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <div style={{ fontSize: '2.5rem' }}>🐾</div>
-        <h2 style={{ margin: '8px 0 4px', color: '#253D4E', fontWeight: 800 }}>Đăng nhập</h2>
-        <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>Chào mừng trở lại PetCare!</p>
+    <div>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>🐾</div>
+        <h2 style={{ margin: '0 0 6px', color: '#111', fontWeight: 900, fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Đăng nhập</h2>
+        <p style={{ color: '#9ca3af', margin: 0, fontSize: '0.9rem' }}>Chào mừng trở lại PetCare!</p>
       </div>
 
-      {/* Demo credentials box */}
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 14px', marginBottom: 18, fontSize: '0.82rem' }}>
-        <div style={{ fontWeight: 700, color: '#166534', marginBottom: 4 }}>🔑 Tài khoản demo</div>
-        <div style={{ color: '#374151', cursor: 'pointer' }} onClick={() => { setEmail('admin@petcare.com'); setPassword('admin123'); }}>
-          👑 Admin: <b>admin@petcare.com</b> / <b>admin123</b>
+      {error && <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 14px', borderRadius: 10, marginBottom: 16, fontSize: '0.88rem', fontWeight: 600 }}>{error}</div>}
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.88rem', color: '#374151' }}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required
+              style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: '0.95rem', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.88rem', color: '#374151' }}>Mật khẩu</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required
+              style={{ width: '100%', padding: '11px 14px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: '0.95rem', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
+          </div>
+          <button type="submit" disabled={loading}
+            style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none', padding: '13px', borderRadius: 50, fontWeight: 800, fontSize: '0.97rem', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: 4 }}>
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          </button>
         </div>
-        <div style={{ color: '#374151', cursor: 'pointer', marginTop: 2 }} onClick={() => { setEmail('user@petcare.com'); setPassword('admin123'); }}>
-          👤 User: <b>user@petcare.com</b> / <b>admin123</b>
-        </div>
+      </form>
+
+      {/* Divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0' }}>
+        <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+        <span style={{ color: '#9ca3af', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>hoặc</span>
+        <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
       </div>
-
-      {error && <div className="error-message" style={{ marginBottom: 12, padding: '10px 14px', background: '#fee2e2', color: '#991b1b', borderRadius: 8, fontSize: '0.88rem' }}>{error}</div>}
-
-      <div className="form-group">
-        <label htmlFor="email">Email</label>
-        <input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="password">Mật khẩu</label>
-        <input type="password" id="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
-      </div>
-
-      <button type="submit" disabled={loading} className="btn-submit" style={{ width: '100%', marginBottom: 12 }}>
-        {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-      </button>
 
       {/* Google Login */}
-      <button
-        type="button"
-        onClick={() => googleLogin()}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          padding: '10px 16px', border: '1.5px solid #e5e7eb', borderRadius: 8, background: '#fff',
-          cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', color: '#374151', marginBottom: 16,
-          transition: 'box-shadow 0.15s',
-        }}
+      <button type="button" onClick={() => googleLogin()}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '11px 16px', border: '1.5px solid #e5e7eb', borderRadius: 50, background: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', color: '#374151', marginBottom: 20, transition: 'box-shadow 0.15s' }}
         onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)')}
-        onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
-      >
-        <svg width="20" height="20" viewBox="0 0 48 48">
+        onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
+        <svg width="18" height="18" viewBox="0 0 48 48">
           <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.6 0 6.6 5.5 2.7 13.5l7.8 6C12.4 13 17.8 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/>
           <path fill="#FBBC05" d="M10.5 28.8A14.6 14.6 0 0 1 9.5 24c0-1.7.3-3.3.9-4.8l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-5.9z"/>
@@ -132,10 +125,10 @@ export const LoginForm: React.FC = () => {
         Đăng nhập bằng Google
       </button>
 
-      <p style={{ textAlign: 'center', fontSize: '0.88rem', color: '#6b7280', margin: 0 }}>
-        Chưa có tài khoản? <a href="/auth/register" style={{ color: '#3BB77E', fontWeight: 600 }}>Đăng ký ngay</a>
+      <p style={{ textAlign: 'center', fontSize: '0.88rem', color: '#6b7280', marginBottom: 0 }}>
+        Chưa có tài khoản? <a href="/auth/register" style={{ color: '#111', fontWeight: 700 }}>Đăng ký ngay</a>
       </p>
-    </form>
+    </div>
   );
 };
 

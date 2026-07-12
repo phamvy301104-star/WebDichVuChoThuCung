@@ -5,6 +5,8 @@ import { loginSuccess, loginFailure, setLoading } from '@stores/slices/authSlice
 import { useAuth } from '@hooks/useAuth';
 import { useGoogleLogin } from '@react-oauth/google';
 
+const HAS_GOOGLE = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 // Tài khoản demo dùng khi backend chưa kết nối
 const DEMO_ACCOUNTS: Record<string, { id: string; name: string; email: string; role: 'admin' | 'user'; phone: string }> = {
   'admin@petcare.com':  { id: '1', name: 'Admin PetCare',    email: 'admin@petcare.com',  role: 'admin', phone: '0900000001' },
@@ -53,7 +55,7 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  // Real Google OAuth — needs VITE_GOOGLE_CLIENT_ID in .env
+  // Real Google OAuth — only works when VITE_GOOGLE_CLIENT_ID is set in .env.local
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -72,8 +74,16 @@ export const LoginForm: React.FC = () => {
         alert('Không thể lấy thông tin tài khoản Google.');
       }
     },
-    onError: () => alert('Đăng nhập Google thất bại. Kiểm tra lại Client ID trong .env'),
+    onError: () => alert('Đăng nhập Google thất bại.'),
   });
+
+  const handleGoogleClick = () => {
+    if (!HAS_GOOGLE) {
+      alert('Google OAuth chưa được cấu hình. Vui lòng thêm VITE_GOOGLE_CLIENT_ID vào file .env.local');
+      return;
+    }
+    googleLogin();
+  };
 
   return (
     <div>
@@ -112,7 +122,7 @@ export const LoginForm: React.FC = () => {
       </div>
 
       {/* Google Login */}
-      <button type="button" onClick={() => googleLogin()}
+      <button type="button" onClick={handleGoogleClick}
         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '11px 16px', border: '1.5px solid #e5e7eb', borderRadius: 50, background: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', color: '#374151', marginBottom: 20, transition: 'box-shadow 0.15s' }}
         onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)')}
         onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>

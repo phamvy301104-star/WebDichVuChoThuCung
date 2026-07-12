@@ -28,19 +28,15 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #e8e4df;
+  background-color: #fff9f4;
   color: #1a1a1a;
   overflow-x: hidden;
 }
 
-/* ─── Fixed-width app wrapper ─── */
+/* ─── App wrapper ─── */
 #root {
-  max-width: 1440px;
   min-width: 320px;
-  margin: 0 auto;
-  background: #fff9f4;
   overflow-x: hidden;
-  box-shadow: 0 0 40px rgba(0,0,0,0.12);
 }
 
 /* ==================== Layout ====================*/

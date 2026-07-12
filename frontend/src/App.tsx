@@ -29,6 +29,7 @@ import { PetListPage } from "@pages/Pets/PetListPage";
 import { SubmitPetPage } from "@pages/Pets/SubmitPetPage";
 import { ContactPage } from "@pages/ContactPage";
 import { ProfilePage } from "@pages/ProfilePage";
+import { PetRecognizePage } from "@pages/PetRecognizePage";
 import { UnauthorizedPage } from "@pages/UnauthorizedPage";
 
 // Admin layout & pages — React.lazy (code splitting, Roadmap mục 4)
@@ -93,6 +94,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/submit-pet" element={<SubmitPetPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/nhan-dien-thu-cung" element={<PetRecognizePage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Protected user routes */}

@@ -47,6 +47,10 @@ export const Header: React.FC = () => {
         <nav className="nav">
           <Link to="/">Trang chủ</Link>
           <Link to="/pets">Thú cưng</Link>
+          <Link to="/nhan-dien-thu-cung" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ background: '#f0fdf4', color: '#166534', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: 6 }}>AI</span>
+            Nhận diện
+          </Link>
           <Link to="/services">Spa & Dịch vụ</Link>
           <Link to="/products">Cửa hàng</Link>
           <Link to="/contact">Liên hệ</Link>

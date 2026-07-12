@@ -211,6 +211,22 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* ===== AI PET RECOGNITION BANNER ===== */}
+      <section style={{ background: 'linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%)', padding: '56px 0', color: '#fff' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'center' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 20, padding: '5px 14px', marginBottom: 16, fontSize: '0.78rem', color: '#86efac', fontWeight: 700 }}>
+              🤖 AI-Powered · Mới
+            </div>
+            <h2 style={{ fontWeight: 900, fontSize: 'clamp(1.5rem,3vw,2rem)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Nhận diện giống thú cưng bằng AI</h2>
+            <p style={{ color: '#aaa', lineHeight: 1.7, margin: 0, maxWidth: 480 }}>Chụp hoặc tải ảnh thú cưng lên — AI nhận diện giống loài, cung cấp thông tin chăm sóc và gợi ý sản phẩm phù hợp ngay lập tức.</p>
+          </div>
+          <Link to="/nhan-dien-thu-cung" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#22c55e', color: '#fff', padding: '14px 28px', borderRadius: 50, fontWeight: 800, textDecoration: 'none', fontSize: '1rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            🔍 Thử ngay miễn phí
+          </Link>
+        </div>
+      </section>
+
       {/* ===== CTA BANNER ===== */}
       <section style={{ background: '#111', color: '#fff', padding: '64px 0' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 48px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 32, textAlign: 'center' }}>
